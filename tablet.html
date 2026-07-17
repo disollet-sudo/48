@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Tablet - Di Solle</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>.no-select { -webkit-user-select: none; user-select: none; }</style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col m-0 p-0">
+
+    <!-- OVERLAY DE CARREGAMENTO INICIAL -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black/50 z-50 flex flex-col items-center justify-center text-white font-bold hidden">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-emerald-600 border-t-transparent mb-4"></div>
+        <p id="loading-text">Sincronizando dados...</p>
+    </div>
+
+    <!-- NAV BAR COM LOGO DINÂMICA -->
+    <nav class="bg-white border-b border-gray-200 shadow-sm p-4 flex justify-between items-center sticky top-0 z-40">
+        <div id="container-logo" class="h-10 w-44 flex items-center justify-start text-gray-400 font-bold text-sm">
+            <!-- Logo Di Solle injetada via API -->
+            Carregando Logo...
+        </div>
+        <div class="flex space-x-2">
+            <button onclick="mudarModo('grade')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg transition text-sm">
+                📥 Registrar Entrada
+            </button>
+            <button onclick="mudarModo('estoque')" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-lg transition text-sm">
+                📦 Ver Estoque Real
+            </button>
+        </div>
+    </nav>
+
+    <!-- CONTAINER -->
+    <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
+        <section id="tela-grade" class="block">
+            <div class="mb-6 flex justify-between items-center">
+                <div>
+                    <h2 id="titulo-pagina" class="text-xl font-bold text-gray-800">Selecione o produto:</h2>
+                    <p class="text-xs text-gray-400 font-mono">Status: Sincronizado em tempo real (15s)</p>
+                </div>
+            </div>
+            <div id="grid-produtos" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+        </section>
+
+        <!-- TELA DA CALCULADORA -->
+        <section id="tela-calculadora" class="hidden max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden mt-4">
+            <div class="bg-gray-50 p-4 border-b border-gray-100 flex items-center space-x-4">
+                <div id="calc-container-foto" class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden"></div>
+                <div class="flex-1">
+                    <span id="calc-produto-codigo" class="text-xs font-mono bg-gray-200 text-gray-700 px-2 py-0.5 rounded">-</span>
+                    <h3 id="calc-produto-nome" class="font-bold text-gray-800 text-sm mt-1 leading-tight">-</h3>
+                </div>
+            </div>
+            <div class="bg-gray-900 text-right p-4">
+                <span class="text-gray-500 text-xs block font-mono">QUANTIDADE A ADICIONAR</span>
+                <div id="visor-quantidade" class="text-emerald-400 text-4xl font-mono font-bold tracking-wider mt-1">0</div>
+            </div>
+            <div class="grid grid-cols-3 gap-1 bg-gray-200 p-1 no-select">
+                <button onclick="digitarNumero('1')" class="bg-white py-5 text-2xl font-bold active:bg-gray-200">1</button>
+                <button onclick="digitarNumero('2')" class="bg-white py-5 text-2xl font-bold active:bg-gray-200">2</button>
+                <button onclick="digitarNumero('3')" class="bg-white py-5 text-2xl font-bold active:bg-gray-200">3</button>
+                <button onclick="digitarNumero('4')" class="bg-white py-5 text-2xl font-bold active:bg-gray-200">4</button>
+                <button onclick="digitarNumero('5')" class="bg-white py-5 text-2xl font-bold active:bg-gray-200">5</button>
+                <button onclick="digitarNumero('6')" class="bg-white py-5 text-2xl font-bold active:bg-gray-200">6</button>
+                <button onclick="digitarNumero('7')" class="bg-white py-5 text-2xl font-bold active:bg-gray-200">7</button>
+                <button onclick="digitarNumero('8')" class="bg-white py-5 text-2xl font-bold active:bg-gray-200">8</button>
+                <button onclick="digitarNumero('9')" class="bg-white py-5 text-2xl font-bold active:bg-gray-200">9</button>
+                <button onclick="limparVisor()" class="bg-red-50 text-red-600 font-bold py-5 text-lg">C</button>
+                <button onclick="digitarNumero('0')" class="bg-white py-5 text-2xl font-bold active:bg-gray-200">0</button>
+                <button onclick="apagarUltimo()" class="bg-gray-100 text-gray-700 py-5 text-xl">⌫</button>
+            </div>
+            <div class="flex border-t border-gray-200">
+                <button onclick="mudarModo('grade')" class="w-1/3 bg-gray-100 font-bold py-4 text-gray-600 text-center">Cancelar</button>
+                <button onclick="salvarEntradaEstoque()" class="w-2/3 bg-emerald-600 text-white font-bold py-4 text-lg">Enviar Planilha ➔</button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbyfYVK-FBPyuHhR25LMNsa6ijvlHq5uMTiehLf-kmGzG99kix36wWHhBP38K2E5U6aycQ/exec";
+
+        let modoAtual = 'grade';
+        let produtoSelecionado = null;
+        let valorVisor = '0';
+        let PRODUTOS_PLANILHA = [];
+        let ESTOQUE_PLANILHA = [];
+        let logoCarregada = false;
+
+        function showLoading(text) {
+            document.getElementById('loading-text').innerText = text;
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        }
+        function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
+
+        async function carregarDadosDaPlanilha(silencioso = false) {
+            if (!silencioso) showLoading("Conectando à Di Solle...");
+            try {
+                const response = await fetch(`${API_URL}?action=buscarDados`);
+                const dados = await response.json();
+                
+                PRODUTOS_PLANILHA = dados.produtos;
+                ESTOQUE_PLANILHA = dados.estoque;
+                
+                // Renderiza a logo apenas na primeira carga
+                if (!logoCarregada && dados.logoId) {
+                    document.getElementById('container-logo').innerHTML = `<img src="https://drive.google.com/thumbnail?id=${dados.logoId}&sz=w400" class="h-full object-contain">`;
+                    logoCarregada = true;
+                }
+                
+                renderizarGradeProdutos(modoAtual === 'estoque');
+            } catch (error) {
+                console.error("Erro na sincronização automática.");
+            } finally { if (!silencioso) hideLoading(); }
+        }
+
+        function mudarModo(novoModo) {
+            modoAtual = novoModo;
+            const telaGrade = document.getElementById('tela-grade');
+            const telaCalc = document.getElementById('tela-calculadora');
+            const titulo = document.getElementById('titulo-pagina');
+
+            if (novoModo === 'grade') {
+                telaGrade.classList.remove('hidden');
+                telaCalc.classList.add('hidden');
+                titulo.innerText = "Selecione o produto para dar entrada:";
+                renderizarGradeProdutos(false);
+            } else if (novoModo === 'estoque') {
+                telaGrade.classList.remove('hidden');
+                telaCalc.classList.add('hidden');
+                titulo.innerText = "Saldo Atual em Estoque:";
+                renderizarGradeProdutos(true);
+            } else if (novoModo === 'calculadora') {
+                telaGrade.classList.add('hidden');
+                telaCalc.classList.remove('hidden');
+            }
+        }
+
+        function renderizarGradeProdutos(exibirQuantidade = false) {
+            const container = document.getElementById('grid-produtos');
+            container.innerHTML = '';
+
+            PRODUTOS_PLANILHA.forEach(prod => {
+                const itemEstoque = ESTOQUE_PLANILHA.find(e => e.codigo === prod.codigo);
+                const qtdAtual = itemEstoque ? itemEstoque.quantidade : 0;
+                const urlImagem = prod.imagemId ? `https://drive.google.com/thumbnail?id=${prod.imagemId}&sz=w400` : '';
+
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition active:scale-95`;
+                if (!exibirQuantidade) card.onclick = () => abrirCalculadora(prod);
+
+                card.innerHTML = `
+                    <div class="h-32 bg-gray-50 flex items-center justify-center relative border-b border-gray-100 overflow-hidden">
+                        ${prod.imagemId ? `<img src="${urlImagem}" class="w-full h-full object-cover">` : `<div class="text-gray-400 font-bold text-[10px] text-center p-2">SEM FOTO<br>${prod.codigo}</div>`}
+                        ${exibirQuantidade ? `<div class="absolute bottom-2 right-2 bg-slate-700 text-white text-xs font-bold font-mono px-2 py-1 rounded shadow">Qtd: ${qtdAtual}</div>` : ''}
+                    </div>
+                    <div class="p-3 flex-1 flex flex-col justify-between">
+                        <span class="text-[10px] font-mono text-gray-400 block">${prod.codigo}</span>
+                        <h4 class="text-xs font-bold text-gray-700 mt-1 uppercase line-clamp-2 leading-tight">${prod.descricao}</h4>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function abrirCalculadora(produto) {
+            produtoSelecionado = produto;
+            valorVisor = '0';
+            document.getElementById('visor-quantidade').innerText = valorVisor;
+            document.getElementById('calc-produto-codigo').innerText = produto.codigo;
+            document.getElementById('calc-produto-nome').innerText = produto.descricao;
+            
+            const containerFoto = document.getElementById('calc-container-foto');
+            containerFoto.innerHTML = produto.imagemId ? `<img src="https://drive.google.com/thumbnail?id=${produto.imagemId}&sz=w400" class="w-full h-full object-cover">` : `<div class="text-gray-400 text-xs font-bold">SEM FOTO</div>`;
+            mudarModo('calculadora');
+        }
+
+        function digitarNumero(num) {
+            if (valorVisor === '0') valorVisor = num;
+            else if (valorVisor.length < 6) valorVisor += num;
+            document.getElementById('visor-quantidade').innerText = valorVisor;
+        }
+        function limparVisor() { valorVisor = '0'; document.getElementById('visor-quantidade').innerText = valorVisor; }
+        function apagarUltimo() {
+            if (valorVisor.length > 1) valorVisor = valorVisor.slice(0, -1); else valorVisor = '0';
+            document.getElementById('visor-quantidade').innerText = valorVisor;
+        }
+
+        async function salvarEntradaEstoque() {
+            const quantidadeInformada = parseInt(valorVisor);
+            if (quantidadeInformada <= 0 || isNaN(quantidadeInformada)) return alert("Quantidade inválida.");
+
+            showLoading("Salvando...");
+            try {
+                await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ action: "registrarEntrada", codigo: produtoSelecionado.codigo, quantidade: quantidadeInformada })
+                });
+                await carregarDadosDaPlanilha(true);
+                mudarModo('grade');
+            } catch (error) { alert("Erro ao salvar."); } 
+            finally { hideLoading(); }
+        }
+
+        // EXECUÇÃO INICIAL DO APP
+        carregarDadosDaPlanilha();
+
+        // REFRESH EM TEMPO REAL: Atualiza o estoque de 5 em 5 segundos em background
+        setInterval(() => {
+            if (modoAtual !== 'calculadora') {
+                carregarDadosDaPlanilha(true);
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

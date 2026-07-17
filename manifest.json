@@ -1,0 +1,18 @@
+{
+  "name": "Di Solle - Controle de Estoque",
+  "short_name": "Estoque Di Solle",
+  "description": "Sistema de Entrada e Saída de Estoque Integrado",
+  "start_url": "./tablet.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#059669",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2897/2897436.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
