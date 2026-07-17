@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Tablet - Di Solle</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- VÍNCULO EXIGIDO PARA INSTALAÇÃO (PWA) -->
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>.no-select { -webkit-user-select: none; user-select: none; }</style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex flex-col m-0 p-0">
@@ -18,7 +20,6 @@
     <!-- NAV BAR COM LOGO DINÂMICA -->
     <nav class="bg-white border-b border-gray-200 shadow-sm p-4 flex justify-between items-center sticky top-0 z-40">
         <div id="container-logo" class="h-10 w-44 flex items-center justify-start text-gray-400 font-bold text-sm">
-            <!-- Logo Di Solle injetada via API -->
             Carregando Logo...
         </div>
         <div class="flex space-x-2">
@@ -96,15 +97,14 @@
         async function carregarDadosDaPlanilha(silencioso = false) {
             if (!silencioso) showLoading("Conectando à Di Solle...");
             try {
-                const response = await fetch(`${API_URL}?action=buscarDados`);
+                const response = await fetch(`${API_URL}?action=buscarDados&nocache=${Math.random()}`);
                 const dados = await response.json();
                 
                 PRODUTOS_PLANILHA = dados.produtos;
                 ESTOQUE_PLANILHA = dados.estoque;
                 
-                // Renderiza a logo apenas na primeira carga
                 if (!logoCarregada && dados.logoId) {
-                    document.getElementById('container-logo').innerHTML = `<img src="https://drive.google.com/thumbnail?id=${dados.logoId}&sz=w400" class="h-full object-contain">`;
+                    document.getElementById('container-logo').innerHTML = `<img src="https://drive.google.com/thumbnail?id=${dados.logoId}&sz=w400" class="h-full object-contain" alt="Logo">`;
                     logoCarregada = true;
                 }
                 
@@ -194,7 +194,7 @@
             try {
                 await fetch(API_URL, {
                     method: "POST",
-                    body: JSON.stringify({ action: "registrarEntrada", codigo: produtoSelecionado.codigo, quantidade: quantidadeInformada })
+                    body: JSON.stringify({ action: "registrarEntrada", codigo: produtoSelecionado.codigo, frequency: 1, quantidade: quantidadeInformada })
                 });
                 await carregarDadosDaPlanilha(true);
                 mudarModo('grade');
@@ -202,15 +202,24 @@
             finally { hideLoading(); }
         }
 
-        // EXECUÇÃO INICIAL DO APP
+        // EXECUÇÃO INICIAL
         carregarDadosDaPlanilha();
 
-        // REFRESH EM TEMPO REAL: Atualiza o estoque de 5 em 5 segundos em background
+        // REFRESH EM TEMPO REAL: 15 segundos
         setInterval(() => {
             if (modoAtual !== 'calculadora') {
                 carregarDadosDaPlanilha(true);
             }
-        }, 5000);
+        }, 15000);
+
+        // --- ATIVADOR DO SERVICE WORKER (ESSENCIAL PARA O TABLET INSTALAR) ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Engine de Instalação Ativa!', reg))
+                    .catch(err => console.error('Erro ao ativar motor PWA:', err));
+            });
+        }
     </script>
 </body>
 </html>
