@@ -2,7 +2,7 @@
   "name": "Di Solle - Controle de Estoque",
   "short_name": "Estoque DS",
   "description": "Painel de Entrada e Saída de Estoque Integrado Di Solle",
-  "start_url": "./index.html",
+  "start_url": "./tablet.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#059669",
