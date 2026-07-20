@@ -20,7 +20,6 @@
             <span class="animate-pulse text-gray-400">Carregando Logo...</span>
         </div>
         <div class="flex items-center space-x-3">
-            <!-- BOTÃO MESA (EDITÁVEL E PERSISTENTE) -->
             <button onclick="alterarMesa()" title="Clique para alterar a mesa" class="text-xs font-mono bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-md border border-slate-700 text-emerald-400 font-bold transition flex items-center space-x-1 cursor-pointer">
                 <span id="label-mesa-ativa">Mesa: MESA 01</span>
                 <span class="text-[10px] text-slate-400">✏️</span>
@@ -47,7 +46,6 @@
 
                 <div class="mb-6">
                     <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Código de Barras (Máx. 13 Dígitos)</label>
-                    <!-- AJUSTE 1: MAXLENGTH 13 DÍGITOS -->
                     <input type="text" id="campo-codigo" maxlength="13" placeholder="Bipe o código..." autofocus autocomplete="off" class="w-full bg-slate-950 border-2 border-emerald-500 rounded-lg p-4 text-xl font-mono text-emerald-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-400">
                     <p class="text-[10px] text-slate-500 font-mono mt-1">O cursor retorna para cá automaticamente após cada bipe.</p>
                 </div>
@@ -58,7 +56,7 @@
             </div>
         </section>
 
-        <!-- PAINEL DIREITO: TABELA DE HISTÓRICO DA SESSÃO -->
+        <!-- PAINEL DIREITO: TABELA DE HISTÓRICO -->
         <section class="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md flex flex-col">
             <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
                 <h2 class="text-lg font-bold text-slate-200">Últimas Saídas Registradas</h2>
@@ -73,7 +71,6 @@
                         <tr class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700">
                             <th class="p-3 w-20">Hora</th>
                             <th class="p-3 w-36">Código</th>
-                            <!-- AJUSTE 2: COLUNA COM QUEBRA DE LINHA LIBERADA -->
                             <th class="p-3">Descrição</th>
                             <th class="p-3 text-center w-20">Caixas</th>
                             <th class="p-3 text-right text-emerald-400 w-28">Total Itens</th>
@@ -89,7 +86,7 @@
     </main>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbylyB1zTZxny_5W9qvb602YWsG3ydM49ugJsvRqZvzn2A1lDgI9h5ydTefRL18MMJq45g/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzFr61m8jp_JFtgUwJvEzERI_TrSS3ljlFdTx4Fhy-fW7qjQYY_FXTuA0PZoG8SGQpP5g/exec";
 
         let MESA_ATUAL = localStorage.getItem('mesa_expedicao') || "MESA 01";
 
@@ -136,40 +133,46 @@
             }
         }
 
+        // FUNÇÃO DE BUSCA DA DESCRIÇÃO DA ABA LISTA DE ITENS
         function resolverProduto(codigoBipado) {
             const codLimpo = String(codigoBipado).trim();
 
-            // 1. Procura na aba REGRAS
-            const regra = REGRAS_CONVERSAO.find(r => String(r.codigoBipado).trim() === codLimpo);
-            if (regra) {
-                const qtdPorCaixa = (parseInt(regra.unidade) || 1) * (parseInt(regra.cx) || 1);
-                return {
-                    codigoBase: codLimpo,
-                    descricao: `CONJUNTO / REGRA (${regra.itens.length} itens desmembrados)`,
-                    fatorEmbalagem: qtdPorCaixa,
-                    temRegra: true
-                };
-            }
-
-            // 2. Procura na LISTA DE ITENS / PRODUTOS
-            const itemEncontrado = LISTA_ITENS.find(i => 
+            // 1. Busca primeiro a descrição oficial na LISTA DE ITENS
+            const itemNaLista = LISTA_ITENS.find(i => 
                 String(i.produto).trim() === codLimpo || 
                 String(i.codigoEan).trim() === codLimpo || 
                 String(i.codigoOutro).trim() === codLimpo
             );
 
-            if (itemEncontrado) {
+            const descricaoOficial = itemNaLista ? itemNaLista.descricao : "";
+
+            // 2. Verifica se o código tem regra de desmembramento
+            const regra = REGRAS_CONVERSAO.find(r => String(r.codigoBipado).trim() === codLimpo);
+            if (regra) {
+                const qtdPorCaixa = (parseInt(regra.unidade) || 1) * (parseInt(regra.cx) || 1);
                 return {
-                    codigoBase: itemEncontrado.produto,
-                    descricao: itemEncontrado.descricao,
-                    fatorEmbalagem: parseInt(itemEncontrado.qtdeEmbalag) || 1,
+                    codigoBase: codLimpo,
+                    // Usa a descrição da lista de itens se existir; senão cai no fallback
+                    descricao: descricaoOficial || `CONJUNTO / REGRA (${regra.itens.length} itens)`,
+                    fatorEmbalagem: qtdPorCaixa,
+                    temRegra: true
+                };
+            }
+
+            // 3. Se não tiver regra, mas está na lista de itens
+            if (itemNaLista) {
+                return {
+                    codigoBase: itemNaLista.produto,
+                    descricao: itemNaLista.descricao,
+                    fatorEmbalagem: parseInt(itemNaLista.qtdeEmbalag) || 1,
                     temRegra: false
                 };
             }
 
+            // 4. Se não achou em lugar nenhum
             return {
                 codigoBase: codLimpo,
-                descricao: "ITEM SEM CADASTRO DE ESTOQUE",
+                descricao: "ITEM SEM CADASTRO NA LISTA DE ITENS",
                 fatorEmbalagem: 1,
                 temRegra: false
             };
@@ -238,7 +241,6 @@
                         totalBaixasSessao++;
                         contadorBaixas.innerText = `Total Operações: ${totalBaixasSessao}`;
 
-                        // REGISTRO NA TABELA COM QUEBRA DE LINHA NO ITEM
                         const tr = document.createElement('tr');
                         tr.className = "text-xs border-b border-slate-800 hover:bg-slate-800/50";
                         tr.innerHTML = `
