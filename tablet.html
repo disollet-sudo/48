@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Tablet - Di Solle</title>
-    <!-- VÍNCULO EXIGIDO PARA INSTALAÇÃO (PWA) -->
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -20,7 +19,7 @@
         <p id="loading-text">Sincronizando dados...</p>
     </div>
 
-    <!-- NAV BAR COM LOGO DINÂMICA E NAVEGAÇÃO -->
+    <!-- NAV BAR COM LOGO DINÂMICA -->
     <nav class="bg-white border-b border-gray-200 shadow-sm p-4 flex flex-col sm:flex-row justify-between items-center gap-3 sticky top-0 z-40">
         <div id="container-logo" class="h-10 w-44 flex items-center justify-start text-gray-400 font-bold text-sm">
             Carregando Logo...
@@ -41,7 +40,7 @@
     <!-- CONTAINER PRINCIPAL -->
     <main class="flex-1 p-4 sm:p-6 max-w-7xl mx-auto w-full">
         
-        <!-- SEÇÃO DA GRADE / ESTOQUE REAL -->
+        <!-- SEÇÃO DA GRADE -->
         <section id="tela-grade" class="block">
             <div class="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                 <div>
@@ -49,7 +48,7 @@
                     <p class="text-xs text-gray-400 font-mono">Status: Sincronizado em tempo real (15s)</p>
                 </div>
 
-                <!-- BARRA DE FILTROS DISCRETOS POR COLEÇÃO/LINHA -->
+                <!-- FILTROS POR COLEÇÃO -->
                 <div id="bar-filtros" class="flex flex-wrap gap-1.5">
                     <button onclick="filtrarColecao('', this)" class="btn-filtro btn-filtro-ativo text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Todos</button>
                     <button onclick="filtrarColecao('14', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Millenium (14)</button>
@@ -65,7 +64,7 @@
             <div id="grid-produtos" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
         </section>
 
-        <!-- SEÇÃO HISTÓRICO DE REGISTROS -->
+        <!-- SEÇÃO REGISTROS -->
         <section id="tela-registros" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-100">
                 <div>
@@ -96,7 +95,7 @@
             </div>
         </section>
 
-        <!-- TELA DA CALCULADORA / TECLADO -->
+        <!-- TELA CALCULADORA -->
         <section id="tela-calculadora" class="hidden max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden mt-2">
             <div class="bg-gray-50 p-4 border-b border-gray-100 flex items-center space-x-4">
                 <div id="calc-container-foto" class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden"></div>
@@ -131,7 +130,7 @@
     </main>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzM1HhB36DR-N_SrQn4AUXMnb6Mjdm2k2QeSxkkbDnuAvFXMknBojK7QgbWKkvDMT2FxQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycby1z5YeUMAvpRl9QqXZJJOVyGZBW4O43ouIWHCSW5Vt_30jGqHHw7tmz6RHEVu5XgcUrQ/exec";
 
         let modoAtual = 'grade';
         let produtoSelecionado = null;
@@ -150,22 +149,22 @@
         }
         function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
 
-        // EXTRATOR INTELIGENTE DE URL / ID DO GOOGLE DRIVE
-        function obterUrlImagem(str) {
-            if (!str) return '';
-            str = String(str).trim();
+        // CONVERSOR DE FOTO (Mesmo formato direto do seu código antigo)
+        function gerarUrlDrive(imagemId) {
+            if (!imagemId) return '';
+            let str = String(imagemId).trim();
             if (!str) return '';
 
-            // Caso venha link completo do Drive
-            if (str.startsWith('http://') || str.startsWith('https://')) {
-                const match = str.match(/\/d\/([a-zA-Z0-9_-]+)/) || str.match(/id=([a-zA-Z0-9_-]+)/);
-                if (match && match[1]) {
-                    return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
-                }
-                return str;
+            // Se for link completo do Drive, extrai o ID
+            const match = str.match(/\/d\/([a-zA-Z0-9_-]+)/) || str.match(/id=([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
             }
-            // Caso venha apenas o ID
-            return `https://drive.google.com/thumbnail?id=${str}&sz=w400`;
+            // Se for ID direto
+            if (!str.startsWith('http')) {
+                return `https://drive.google.com/thumbnail?id=${str}&sz=w400`;
+            }
+            return str;
         }
 
         async function carregarDadosDaPlanilha(silencioso = false) {
@@ -179,7 +178,7 @@
                 HISTORICO_ENTRADAS = dados.historicoEntradas || [];
                 
                 if (!logoCarregada && dados.logoId) {
-                    const urlLogo = obterUrlImagem(dados.logoId);
+                    const urlLogo = gerarUrlDrive(dados.logoId);
                     document.getElementById('container-logo').innerHTML = `<img src="${urlLogo}" class="h-full object-contain" alt="Logo">`;
                     logoCarregada = true;
                 }
@@ -242,14 +241,14 @@
             const produtosFiltrados = PRODUTOS_PLANILHA.filter(prod => codigosIguaisPrefixo(prod.codigo, filtroPrefixo));
 
             if (produtosFiltrados.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400 font-mono text-xs">Nenhum produto encontrado para esta coleção/filtro.</div>`;
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400 font-mono text-xs">Nenhum produto encontrado para este filtro.</div>`;
                 return;
             }
 
             produtosFiltrados.forEach(prod => {
                 const itemEstoque = ESTOQUE_PLANILHA.find(e => String(e.codigo).replace(/^0+/, '') === String(prod.codigo).replace(/^0+/, ''));
                 const qtdAtual = itemEstoque ? itemEstoque.quantidade : 0;
-                const urlImagem = obterUrlImagem(prod.imagemId);
+                const urlImagem = gerarUrlDrive(prod.imagemId);
 
                 const card = document.createElement('div');
                 card.className = `bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition active:scale-95`;
@@ -258,8 +257,7 @@
                 card.innerHTML = `
                     <div class="h-32 bg-gray-50 flex items-center justify-center relative border-b border-gray-100 overflow-hidden">
                         ${urlImagem ? `
-                            <img src="${urlImagem}" class="w-full h-full object-cover" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
-                            <div class="hidden text-gray-400 font-bold text-[10px] text-center p-2">SEM FOTO<br>${prod.codigo}</div>
+                            <img src="${urlImagem}" class="w-full h-full object-cover">
                         ` : `
                             <div class="text-gray-400 font-bold text-[10px] text-center p-2">SEM FOTO<br>${prod.codigo}</div>
                         `}
@@ -316,9 +314,9 @@
             document.getElementById('calc-produto-codigo').innerText = produto.codigo;
             document.getElementById('calc-produto-nome').innerText = produto.descricao;
             
-            const urlImg = obterUrlImagem(produto.imagemId);
+            const urlImg = gerarUrlDrive(produto.imagemId);
             const containerFoto = document.getElementById('calc-container-foto');
-            containerFoto.innerHTML = urlImg ? `<img src="${urlImg}" class="w-full h-full object-cover" onerror="this.parentNode.innerHTML='<div class=\'text-gray-400 text-xs font-bold\'>SEM FOTO</div>';">` : `<div class="text-gray-400 text-xs font-bold">SEM FOTO</div>`;
+            containerFoto.innerHTML = urlImg ? `<img src="${urlImg}" class="w-full h-full object-cover">` : `<div class="text-gray-400 text-xs font-bold">SEM FOTO</div>`;
             mudarModo('calculadora');
         }
 
