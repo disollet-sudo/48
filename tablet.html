@@ -7,7 +7,10 @@
     <!-- VÍNCULO EXIGIDO PARA INSTALAÇÃO (PWA) -->
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>.no-select { -webkit-user-select: none; user-select: none; }</style>
+    <style>
+        .no-select { -webkit-user-select: none; user-select: none; }
+        .btn-filtro-ativo { background-color: #059669 !important; color: #ffffff !important; border-color: #059669 !important; }
+    </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex flex-col m-0 p-0">
 
@@ -17,35 +20,84 @@
         <p id="loading-text">Sincronizando dados...</p>
     </div>
 
-    <!-- NAV BAR COM LOGO DINÂMICA -->
-    <nav class="bg-white border-b border-gray-200 shadow-sm p-4 flex justify-between items-center sticky top-0 z-40">
+    <!-- NAV BAR COM LOGO DINÂMICA E NAVEGAÇÃO -->
+    <nav class="bg-white border-b border-gray-200 shadow-sm p-4 flex flex-col sm:flex-row justify-between items-center gap-3 sticky top-0 z-40">
         <div id="container-logo" class="h-10 w-44 flex items-center justify-start text-gray-400 font-bold text-sm">
             Carregando Logo...
         </div>
-        <div class="flex space-x-2">
-            <button onclick="mudarModo('grade')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg transition text-sm">
+        <div class="flex flex-wrap justify-center space-x-2">
+            <button id="btn-nav-grade" onclick="mudarModo('grade')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 sm:px-4 rounded-lg transition text-xs sm:text-sm">
                 📥 Registrar Entrada
             </button>
-            <button onclick="mudarModo('estoque')" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-lg transition text-sm">
+            <button id="btn-nav-estoque" onclick="mudarModo('estoque')" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-3 sm:px-4 rounded-lg transition text-xs sm:text-sm">
                 📦 Ver Estoque Real
+            </button>
+            <button id="btn-nav-registros" onclick="mudarModo('registros')" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-3 sm:px-4 rounded-lg transition text-xs sm:text-sm">
+                📋 Registros
             </button>
         </div>
     </nav>
 
-    <!-- CONTAINER -->
-    <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
+    <!-- CONTAINER PRINCIPAL -->
+    <main class="flex-1 p-4 sm:p-6 max-w-7xl mx-auto w-full">
+        
+        <!-- SEÇÃO DA GRADE / ESTOQUE REAL -->
         <section id="tela-grade" class="block">
-            <div class="mb-6 flex justify-between items-center">
+            <div class="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                 <div>
                     <h2 id="titulo-pagina" class="text-xl font-bold text-gray-800">Selecione o produto:</h2>
                     <p class="text-xs text-gray-400 font-mono">Status: Sincronizado em tempo real (15s)</p>
                 </div>
+
+                <!-- BARRA DE FILTROS DISCRETOS POR COLEÇÃO/LINHA -->
+                <div id="bar-filtros" class="flex flex-wrap gap-1.5">
+                    <button onclick="filtrarColecao('', this)" class="btn-filtro btn-filtro-ativo text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Todos</button>
+                    <button onclick="filtrarColecao('14', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Millenium (14)</button>
+                    <button onclick="filtrarColecao('38', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Inova (38)</button>
+                    <button onclick="filtrarColecao('35', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Prisma (35)</button>
+                    <button onclick="filtrarColecao('01', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Paraty (01)</button>
+                    <button onclick="filtrarColecao('18', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Durafio (18)</button>
+                    <button onclick="filtrarColecao('37', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Utilidade (37)</button>
+                    <button onclick="filtrarColecao('04', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">New Tropical (04)</button>
+                </div>
             </div>
+
             <div id="grid-produtos" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
         </section>
 
-        <!-- TELA DA CALCULADORA -->
-        <section id="tela-calculadora" class="hidden max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden mt-4">
+        <!-- SEÇÃO HISTÓRICO DE REGISTROS -->
+        <section id="tela-registros" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-100">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">📋 Histórico de Entradas Registradas</h2>
+                    <p class="text-xs text-gray-500">Acompanhe e filtre as entradas realizadas no tablet</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label class="text-xs font-bold text-gray-600">Filtrar Data:</label>
+                    <input type="date" id="filtro-data-registro" onchange="renderizarTabelaRegistros()" class="bg-gray-50 border border-gray-300 text-gray-800 text-sm rounded-lg p-2 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm font-mono">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-600 uppercase text-[11px] tracking-wider border-b border-gray-200">
+                            <th class="p-3 w-36">Data / Hora</th>
+                            <th class="p-3 w-36">Código</th>
+                            <th class="p-3">Descrição do Item</th>
+                            <th class="p-3 text-right text-emerald-600 w-32">Qtd Entrou</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-registros-corpo" class="divide-y divide-gray-100"></tbody>
+                </table>
+                <div id="registros-vazio" class="text-center py-10 text-gray-400 text-xs uppercase hidden">
+                    Nenhum registro de entrada encontrado para a data selecionada.
+                </div>
+            </div>
+        </section>
+
+        <!-- TELA DA CALCULADORA / TECLADO -->
+        <section id="tela-calculadora" class="hidden max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden mt-2">
             <div class="bg-gray-50 p-4 border-b border-gray-100 flex items-center space-x-4">
                 <div id="calc-container-foto" class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden"></div>
                 <div class="flex-1">
@@ -79,14 +131,19 @@
     </main>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyfYVK-FBPyuHhR25LMNsa6ijvlHq5uMTiehLf-kmGzG99kix36wWHhBP38K2E5U6aycQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyrbGYyMo_-IjjPMJWN1C2uLwIf1xUZRMvLnHE4lQhbnWI2CJyFSpXgz-1MDwZuFUMszQ/exec";
 
         let modoAtual = 'grade';
         let produtoSelecionado = null;
         let valorVisor = '0';
         let PRODUTOS_PLANILHA = [];
         let ESTOQUE_PLANILHA = [];
+        let HISTORICO_ENTRADAS = [];
         let logoCarregada = false;
+        let filtroPrefixo = '';
+
+        // DEFINE A DATA DE HOJE NO CAMPO DE FILTRO COMO PADRÃO
+        document.getElementById('filtro-data-registro').value = new Date().toISOString().split('T')[0];
 
         function showLoading(text) {
             document.getElementById('loading-text').innerText = text;
@@ -100,15 +157,20 @@
                 const response = await fetch(`${API_URL}?action=buscarDados&nocache=${Math.random()}`);
                 const dados = await response.json();
                 
-                PRODUTOS_PLANILHA = dados.produtos;
-                ESTOQUE_PLANILHA = dados.estoque;
+                PRODUTOS_PLANILHA = dados.produtos || [];
+                ESTOQUE_PLANILHA = dados.estoque || [];
+                HISTORICO_ENTRADAS = dados.historicoEntradas || [];
                 
                 if (!logoCarregada && dados.logoId) {
                     document.getElementById('container-logo').innerHTML = `<img src="https://drive.google.com/thumbnail?id=${dados.logoId}&sz=w400" class="h-full object-contain" alt="Logo">`;
                     logoCarregada = true;
                 }
                 
-                renderizarGradeProdutos(modoAtual === 'estoque');
+                if (modoAtual === 'registros') {
+                    renderizarTabelaRegistros();
+                } else {
+                    renderizarGradeProdutos(modoAtual === 'estoque');
+                }
             } catch (error) {
                 console.error("Erro na sincronização automática.");
             } finally { if (!silencioso) hideLoading(); }
@@ -118,30 +180,61 @@
             modoAtual = novoModo;
             const telaGrade = document.getElementById('tela-grade');
             const telaCalc = document.getElementById('tela-calculadora');
+            const telaRegistros = document.getElementById('tela-registros');
             const titulo = document.getElementById('titulo-pagina');
+
+            // OCULTAR TODAS
+            telaGrade.classList.add('hidden');
+            telaCalc.classList.add('hidden');
+            telaRegistros.classList.add('hidden');
 
             if (novoModo === 'grade') {
                 telaGrade.classList.remove('hidden');
-                telaCalc.classList.add('hidden');
                 titulo.innerText = "Selecione o produto para dar entrada:";
                 renderizarGradeProdutos(false);
             } else if (novoModo === 'estoque') {
                 telaGrade.classList.remove('hidden');
-                telaCalc.classList.add('hidden');
-                titulo.innerText = "Saldo Atual em Estoque:";
+                titulo.innerText = "Saldo Atual em Estoque Real:";
                 renderizarGradeProdutos(true);
+            } else if (novoModo === 'registros') {
+                telaRegistros.classList.remove('hidden');
+                renderizarTabelaRegistros();
             } else if (novoModo === 'calculadora') {
-                telaGrade.classList.add('hidden');
                 telaCalc.classList.remove('hidden');
             }
+        }
+
+        function filtrarColecao(prefixo, elementoBotao) {
+            filtroPrefixo = prefixo;
+            
+            // Atualiza botões
+            document.querySelectorAll('.btn-filtro').forEach(btn => btn.classList.remove('btn-filtro-ativo'));
+            if (elementoBotao) elementoBotao.classList.add('btn-filtro-ativo');
+
+            renderizarGradeProdutos(modoAtual === 'estoque');
+        }
+
+        function codigosIguaisPrefixo(codigo, prefixo) {
+            if (!prefixo) return true;
+            const c = String(codigo).trim();
+            const p = String(prefixo).trim();
+            // Compara original ou removendo zeros à esquerda
+            return c.startsWith(p) || c.replace(/^0+/, '').startsWith(p.replace(/^0+/, ''));
         }
 
         function renderizarGradeProdutos(exibirQuantidade = false) {
             const container = document.getElementById('grid-produtos');
             container.innerHTML = '';
 
-            PRODUTOS_PLANILHA.forEach(prod => {
-                const itemEstoque = ESTOQUE_PLANILHA.find(e => e.codigo === prod.codigo);
+            const produtosFiltrados = PRODUTOS_PLANILHA.filter(prod => codigosIguaisPrefixo(prod.codigo, filtroPrefixo));
+
+            if (produtosFiltrados.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400 font-mono text-xs">Nenhum produto encontrado para esta coleção/filtro.</div>`;
+                return;
+            }
+
+            produtosFiltrados.forEach(prod => {
+                const itemEstoque = ESTOQUE_PLANILHA.find(e => String(e.codigo).replace(/^0+/, '') === String(prod.codigo).replace(/^0+/, ''));
                 const qtdAtual = itemEstoque ? itemEstoque.quantidade : 0;
                 const urlImagem = prod.imagemId ? `https://drive.google.com/thumbnail?id=${prod.imagemId}&sz=w400` : '';
 
@@ -152,14 +245,50 @@
                 card.innerHTML = `
                     <div class="h-32 bg-gray-50 flex items-center justify-center relative border-b border-gray-100 overflow-hidden">
                         ${prod.imagemId ? `<img src="${urlImagem}" class="w-full h-full object-cover">` : `<div class="text-gray-400 font-bold text-[10px] text-center p-2">SEM FOTO<br>${prod.codigo}</div>`}
-                        ${exibirQuantidade ? `<div class="absolute bottom-2 right-2 bg-slate-700 text-white text-xs font-bold font-mono px-2 py-1 rounded shadow">Qtd: ${qtdAtual}</div>` : ''}
+                        ${exibirQuantidade ? `<div class="absolute bottom-2 right-2 bg-slate-800 text-emerald-400 text-xs font-bold font-mono px-2 py-1 rounded shadow border border-slate-700">Qtd: ${qtdAtual}</div>` : ''}
                     </div>
                     <div class="p-3 flex-1 flex flex-col justify-between">
-                        <span class="text-[10px] font-mono text-gray-400 block">${prod.codigo}</span>
+                        <span class="text-[10px] font-mono text-gray-400 block font-bold">${prod.codigo}</span>
                         <h4 class="text-xs font-bold text-gray-700 mt-1 uppercase line-clamp-2 leading-tight">${prod.descricao}</h4>
                     </div>
                 `;
                 container.appendChild(card);
+            });
+        }
+
+        function renderizarTabelaRegistros() {
+            const corpoTabela = document.getElementById('tabela-registros-corpo');
+            const mensagemVazio = document.getElementById('registros-vazio');
+            const dataFiltro = document.getElementById('filtro-data-registro').value; // Formato YYYY-MM-DD
+
+            corpoTabela.innerHTML = '';
+
+            const registrosFiltrados = HISTORICO_ENTRADAS.filter(item => {
+                if (!dataFiltro) return true;
+                // Converter data do registro (Ex: 2026-07-20T10:43:00) para YYYY-MM-DD
+                const dataItem = new Date(item.dataHora).toISOString().split('T')[0];
+                return dataItem === dataFiltro;
+            });
+
+            if (registrosFiltrados.length === 0) {
+                mensagemVazio.classList.remove('hidden');
+                return;
+            }
+
+            mensagemVazio.classList.add('hidden');
+
+            registrosFiltrados.forEach(reg => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition border-b border-gray-100 text-xs font-mono";
+                const formatData = new Date(reg.dataHora).toLocaleString('pt-BR');
+
+                tr.innerHTML = `
+                    <td class="p-3 text-gray-500 whitespace-nowrap">${formatData}</td>
+                    <td class="p-3 font-bold text-gray-700 whitespace-nowrap">${reg.codigo}</td>
+                    <td class="p-3 font-semibold text-gray-800 uppercase whitespace-normal break-words">${reg.descricao || 'ENTRADA DE MATERIAL'}</td>
+                    <td class="p-3 text-right font-bold text-emerald-600 whitespace-nowrap">+${reg.quantidade} un</td>
+                `;
+                corpoTabela.appendChild(tr);
             });
         }
 
@@ -177,7 +306,7 @@
 
         function digitarNumero(num) {
             if (valorVisor === '0') valorVisor = num;
-            else if (valorVisor.length < 6) valorVisor += num;
+            else if (valorVisor.length < 7) valorVisor += num;
             document.getElementById('visor-quantidade').innerText = valorVisor;
         }
         function limparVisor() { valorVisor = '0'; document.getElementById('visor-quantidade').innerText = valorVisor; }
@@ -190,16 +319,24 @@
             const quantidadeInformada = parseInt(valorVisor);
             if (quantidadeInformada <= 0 || isNaN(quantidadeInformada)) return alert("Quantidade inválida.");
 
-            showLoading("Salvando...");
+            showLoading("Registrando entrada...");
             try {
                 await fetch(API_URL, {
                     method: "POST",
-                    body: JSON.stringify({ action: "registrarEntrada", codigo: produtoSelecionado.codigo, frequency: 1, quantidade: quantidadeInformada })
+                    body: JSON.stringify({ 
+                        action: "registrarEntrada", 
+                        codigo: produtoSelecionado.codigo, 
+                        descricao: produtoSelecionado.descricao,
+                        quantidade: quantidadeInformada 
+                    })
                 });
                 await carregarDadosDaPlanilha(true);
                 mudarModo('grade');
-            } catch (error) { alert("Erro ao salvar."); } 
-            finally { hideLoading(); }
+            } catch (error) { 
+                alert("Erro ao salvar entrada no banco."); 
+            } finally { 
+                hideLoading(); 
+            }
         }
 
         // EXECUÇÃO INICIAL
@@ -212,12 +349,10 @@
             }
         }, 15000);
 
-        // --- ATIVADOR DO SERVICE WORKER (ESSENCIAL PARA O TABLET INSTALAR) ---
+        // SERVICE WORKER PARA INSTALAÇÃO PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Engine de Instalação Ativa!', reg))
-                    .catch(err => console.error('Erro ao ativar motor PWA:', err));
+                navigator.serviceWorker.register('./sw.js').catch(() => {});
             });
         }
     </script>
