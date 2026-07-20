@@ -4,66 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Expedição - Di Solle</title>
-    <!-- Vínculo com o Manifesto para permitir a instalação como App (PWA) -->
+    
     <link rel="manifest" href="manifest.json">
-    <!-- Tailwind CSS para estilização moderna -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col m-0 p-0">
 
-    <!-- NAV BAR COM LOGO DINÂMICA -->
+    <!-- NAVBAR SUPERIOR -->
     <nav class="bg-white border-b border-gray-200 p-4 shadow-sm flex justify-between items-center">
-        <!-- Espaço reservado para a Logo Di Solle carregada do Drive -->
         <div id="container-logo" class="h-10 w-44 flex items-center justify-start text-gray-800 font-bold text-sm tracking-wide">
             <span class="animate-pulse text-gray-400">Carregando Logo...</span>
         </div>
-        <div class="text-xs font-mono bg-slate-800 px-3 py-1.5 rounded-md border border-slate-700 text-slate-300">
-            Modo: <span class="text-amber-400 font-bold">Baixa por Bipagem Rápida</span>
+        <div class="flex items-center space-x-4">
+            <span id="label-mesa-ativa" class="text-xs font-mono bg-slate-800 px-3 py-1.5 rounded-md border border-slate-700 text-emerald-400 font-bold">
+                Mesa: MESA 01
+            </span>
+            <div class="text-xs font-mono bg-slate-800 px-3 py-1.5 rounded-md border border-slate-700 text-amber-400 font-bold">
+                Modo: Baixa por Embalagem
+            </div>
         </div>
     </nav>
 
-    <!-- LAYOUT PRINCIPAL -->
-    <main class="flex-1 p-6 max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 p-6 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <!-- COLUNA ESQUERDA: FORMULÁRIO DE BIPAGEM -->
+        <!-- PAINEL ESQUERDO: ENTRADA DE BIPAGEM -->
         <section class="lg:col-span-1 bg-slate-800 p-6 rounded-xl border border-slate-700 flex flex-col justify-between shadow-md">
             <div>
                 <h2 class="text-lg font-bold mb-4 text-slate-200 border-b border-slate-700 pb-2">Saída de Materiais</h2>
                 
-                <!-- IDENTIFICAÇÃO DA MESA -->
+                <!-- QTD DE CAIXAS / EMBALAGENS -->
                 <div class="mb-4">
-                    <label class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Mesa / Destino</label>
-                    <input type="text" id="campo-mesa" value="MESA 01" 
-                           class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-lg font-bold text-slate-100 focus:outline-none focus:border-amber-500 uppercase transition">
+                    <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Qtd de Caixas / Embalagens Bipadas</label>
+                    <input type="number" id="campo-caixas" value="1" min="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-2xl font-mono font-bold text-amber-400 focus:outline-none focus:border-amber-500">
                 </div>
 
-                <!-- SELETOR DE QUANTIDADE (EMBALAGENS) -->
-                <div class="mb-4">
-                    <label class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Qtd Embalagens (Bipadas)</label>
-                    <input type="number" id="campo-qtd" value="1" min="1"
-                           class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-2xl font-mono font-bold text-amber-400 focus:outline-none focus:border-amber-500 transition">
-                </div>
-
-                <!-- CAMPO DO LEITOR DE CÓDIGO DE BARRAS -->
+                <!-- CAMPO PRINCIPAL DE BIPAGEM -->
                 <div class="mb-6">
-                    <label class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Código de Barras (Bipar)</label>
-                    <input type="text" id="campo-codigo" placeholder="Bipe o código aqui..." autofocus autocomplete="off"
-                           class="w-full bg-slate-950 border-2 border-emerald-500 rounded-lg p-4 text-xl font-mono text-emerald-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-                    <p class="text-[10px] text-slate-500 mt-1 font-mono">O cursor retorna para cá automaticamente após cada bipe.</p>
+                    <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Código de Barras (Bipar)</label>
+                    <input type="text" id="campo-codigo" placeholder="Bipe o código aqui..." autofocus autocomplete="off" class="w-full bg-slate-950 border-2 border-emerald-500 rounded-lg p-4 text-xl font-mono text-emerald-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                    <p class="text-[10px] text-slate-500 font-mono mt-1">O cursor retorna para cá automaticamente após cada bipe.</p>
                 </div>
             </div>
 
-            <!-- FEEDBACK EM TEMPO REAL -->
+            <!-- STATUS BOX -->
             <div id="status-box" class="bg-slate-950 p-4 rounded-lg border border-slate-800 text-center text-sm font-mono text-slate-400">
                 Aguardando leitura de código...
             </div>
         </section>
 
-        <!-- COLUNA DIREITA: HISTÓRICO DE SAÍDAS DA SESSÃO -->
+        <!-- PAINEL DIREITO: TABELA DE HISTÓRICO -->
         <section class="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md flex flex-col">
             <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
                 <h2 class="text-lg font-bold text-slate-200">Últimas Saídas Registradas</h2>
-                <span id="contador-baixas" class="bg-slate-950 text-emerald-400 border border-slate-700 text-xs font-mono px-2 py-1 rounded">Total: 0</span>
+                <span id="contador-baixas" class="bg-slate-950 text-emerald-400 border border-slate-700 text-xs font-mono px-2 py-1 rounded">
+                    Total Operações: 0
+                </span>
             </div>
 
             <div class="flex-1 overflow-x-auto">
@@ -71,155 +71,192 @@
                     <thead>
                         <tr class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700">
                             <th class="p-3">Hora</th>
-                            <th class="p-3">Mesa</th>
                             <th class="p-3">Código</th>
-                            <th class="p-3 text-center">Fator</th>
-                            <th class="p-3 text-right text-emerald-400">Total</th>
+                            <th class="p-3">Descrição</th>
+                            <th class="p-3 text-center">Caixas</th>
+                            <th class="p-3 text-right text-emerald-400">Total Itens</th>
                         </tr>
                     </thead>
                     <tbody id="tabela-historico" class="divide-y divide-slate-700/50">
-                        <!-- Inserido dinamicamente via JS -->
+                        <!-- Linhas inseridas dinamicamente via JS -->
                     </tbody>
                 </table>
-                <div id="historico-vazio" class="text-center py-12 text-slate-500 text-xs uppercase tracking-wide">
+                <div id="historico-vazio" class="text-center py-12 text-slate-500 text-xs uppercase">
                     Nenhuma saída realizada nesta sessão.
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- INTELIGÊNCIA EM JAVASCRIPT VANILLA -->
     <script>
-        // ⚠️ ATENÇÃO: Cole aqui a exata URL gerada no seu "Implante" do Google Apps Script
         const API_URL = "https://script.google.com/macros/s/AKfycbyXyr7rcWg9tCNfjAfBqZaKg7ZcqBUpmojEKKhXy7pZ8hF27aBtVW2DP4yVOCyv8lEU-g/exec";
 
+        // Recupera a mesa salva localmente ou define padrão
+        const MESA_ATUAL = localStorage.getItem('mesa_expedicao') || "MESA 01";
+        document.getElementById('label-mesa-ativa').innerText = `Mesa: ${MESA_ATUAL}`;
+
         const campoCodigo = document.getElementById('campo-codigo');
-        const campoMesa = document.getElementById('campo-mesa');
-        const campoQtd = document.getElementById('campo-qtd');
+        const campoCaixas = document.getElementById('campo-caixas');
         const statusBox = document.getElementById('status-box');
         const tabelaHistorico = document.getElementById('tabela-historico');
         const historicoVazio = document.getElementById('historico-vazio');
         const contadorBaixas = document.getElementById('contador-baixas');
 
         let totalBaixasSessao = 0;
+        let LISTA_ITENS = [];
+        let REGRAS_CONVERSAO = [];
 
-        // --- CARREGADOR ROBUSTO DA LOGO DI SOLLE ---
-        async function buscarLogoInicial() {
+        // Carrega dados mestres da planilha (Lista de Itens e Regras)
+        async function inicializarDados() {
             try {
-                // Força a quebra de cache para evitar que o navegador use dados desatualizados locais
-                const response = await fetch(`${API_URL}?action=buscarDados&nocache=${Math.random()}`);
+                const response = await fetch(`${API_URL}?action=buscarDadosExpedicao&nocache=${Math.random()}`);
                 const dados = await response.json();
-                if(dados.logoId) {
-                    document.getElementById('container-logo').innerHTML = `
-                        <img src="https://drive.google.com/thumbnail?id=${dados.logoId}&sz=w400" 
-                             class="h-full object-contain" 
-                             alt="Logo Di Solle"
-                             onerror="this.parentNode.innerText='DI SOLLE';">`;
+                
+                LISTA_ITENS = dados.listaItens || [];
+                REGRAS_CONVERSAO = dados.regras || [];
+
+                if (dados.logoId) {
+                    document.getElementById('container-logo').innerHTML = `<img src="https://drive.google.com/thumbnail?id=${dados.logoId}&sz=w400" class="h-full object-contain" onerror="this.parentNode.innerText='DI SOLLE';">`;
                 } else {
                     document.getElementById('container-logo').innerText = "DI SOLLE";
                 }
-            } catch(e) { 
-                console.log("Aviso: Logo aguardando publicação em ambiente seguro (HTTPS).", e);
+            } catch (e) {
                 document.getElementById('container-logo').innerText = "DI SOLLE";
+                console.error("Erro ao carregar dados mestres.");
             }
         }
 
-        // --- SISTEMA DE BIP SONORO INTEGRADO (WEB AUDIO API) ---
+        // Função para resolver o Código Bipado -> Código Base, Descrição e Qtd por Caixa
+        function resolverProduto(codigoBipado) {
+            const codLimpo = String(codigoBipado).trim();
+
+            // 1. Procura primeiro na aba "REGRAS" (Conversoes especiais de SAQ/Caixas)
+            const regraEncontrada = REGRAS_CONVERSAO.find(r => String(r.codigoBipado).trim() === codLimpo);
+            if (regraEncontrada) {
+                return {
+                    codigoBase: regraEncontrada.codigoBase,
+                    descricao: regraEncontrada.descricao || "PRODUTO CONVERTIDO",
+                    fatorEmbalagem: parseInt(regraEncontrada.fator) || 1
+                };
+            }
+
+            // 2. Procura na aba "LISTA DE ITENS" (por Produto, Codigo_ean ou Codigo_outro)
+            const itemEncontrado = LISTA_ITENS.find(i => 
+                String(i.produto).trim() === codLimpo || 
+                String(i.codigoEan).trim() === codLimpo || 
+                String(i.codigoOutro).trim() === codLimpo
+            );
+
+            if (itemEncontrado) {
+                return {
+                    codigoBase: itemEncontrado.produto,
+                    descricao: itemEncontrado.descricao,
+                    fatorEmbalagem: parseInt(itemEncontrado.qtdeEmbalag) || 1
+                };
+            }
+
+            // 3. Caso não encontre em nenhuma regra, assume fator 1 com o próprio código
+            return {
+                codigoBase: codLimpo,
+                descricao: "ITEM NÃO CADASTRADO NA LISTA",
+                fatorEmbalagem: 1
+            };
+        }
+
         function tocarBipe(sucesso) {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
-                osc.connect(gain); gain.connect(ctx.destination);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
                 
                 if (sucesso) {
-                    osc.frequency.setValueAtTime(1000, ctx.currentTime); // Som agudo de sucesso
+                    osc.frequency.setValueAtTime(1000, ctx.currentTime);
                     gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                    osc.start(); osc.stop(ctx.currentTime + 0.12);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.12);
                 } else {
-                    osc.type = 'sawtooth'; 
-                    osc.frequency.setValueAtTime(220, ctx.currentTime); // Som grave de erro
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, ctx.currentTime);
                     gain.gain.setValueAtTime(0.3, ctx.currentTime);
-                    osc.start(); osc.stop(ctx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
                 }
-            } catch (e) { console.error("Audio Context não suportado."); }
+            } catch (e) {}
         }
 
-        // --- CAPTURA E PROCESSAMENTO DA BIPAGEM/ENTER ---
+        // EVENTO DE BIPAGEM (TECLA ENTER)
         campoCodigo.addEventListener('keydown', async function(e) {
             if (e.key === 'Enter') {
-                const codigoValue = campoCodigo.value.trim();
-                const mesaValue = campoMesa.value.trim().toUpperCase();
-                const qtdEmbalagens = parseInt(campoQtd.value) || 1;
+                const codigoBipado = campoCodigo.value.trim();
+                const caixasBipadas = parseInt(campoCaixas.value) || 1;
+                
+                if (!codigoBipado) return;
 
-                if (!codigoValue) return;
-
-                // Bloqueia entrada para evitar leituras duplicadas acidentais em leitor rápido
                 campoCodigo.disabled = true;
-                atualizarStatus("Dando baixa no estoque...", "text-amber-400");
+                statusBox.innerText = "Consultando e baixando estoque...";
+
+                // Resolve código e fator de embalagem
+                const infoProduto = resolverProduto(codigoBipado);
+                const totalItensDescontados = caixasBipadas * infoProduto.fatorEmbalagem;
 
                 try {
                     const response = await fetch(API_URL, {
                         method: "POST",
                         body: JSON.stringify({ 
-                            action: "registrarSaida", 
-                            codigo: codigoValue, 
-                            quantidade: qtdEmbalagens, 
-                            mesa: mesaValue 
+                            action: "registrarSaidaExakta", 
+                            codigoBipado: codigoBipado,
+                            codigoBase: infoProduto.codigoBase,
+                            descricao: infoProduto.descricao,
+                            caixas: caixasBipadas,
+                            totalItens: totalItensDescontados,
+                            mesa: MESA_ATUAL 
                         })
                     });
+                    
                     const resultado = await response.json();
 
                     if (resultado.success) {
                         tocarBipe(true);
-                        atualizarStatus(`✅ Baixa Processada! -${resultado.totalBaixado} un.`, "text-emerald-400");
-                        adicionarAoHistorico(mesaValue, codigoValue, qtdEmbalagens, resultado.totalBaixado);
-                    } else { throw new Error("Erro de processamento"); }
-                } catch (err) {
-                    tocarBipe(false);
-                    atualizarStatus("❌ Erro ao salvar na planilha!", "text-red-400");
-                } finally {
-                    // Libera o campo, limpa os dados antigos e força o foco de volta para o leitor de código
-                    campoCodigo.disabled = false;
-                    campoCodigo.value = '';
-                    campoQtd.value = '1';
-                    campoCodigo.focus();
+                        statusBox.innerHTML = `<span class="text-emerald-400 font-bold">✅ Baixa Processada!</span><br><span class="text-xs text-slate-300">${infoProduto.descricao} (-${totalItensDescontados} un)</span>`;
+                        
+                        historicoVazio.classList.add('hidden');
+                        totalBaixasSessao++;
+                        contadorBaixas.innerText = `Total Operações: ${totalBaixasSessao}`;
+
+                        // Adiciona nova linha na tabela do painel direito
+                        const tr = document.createElement('tr');
+                        tr.className = "text-xs border-b border-slate-800 hover:bg-slate-800/50";
+                        tr.innerHTML = `
+                            <td class="p-3 text-slate-500">${new Date().toLocaleTimeString()}</td>
+                            <td class="p-3 font-mono font-bold text-slate-300">${infoProduto.codigoBase}</td>
+                            <td class="p-3 text-slate-200 uppercase truncate max-w-[200px]" title="${infoProduto.descricao}">${infoProduto.descricao}</td>
+                            <td class="p-3 text-center text-amber-400 font-bold">${caixasBipadas} Cx</td>
+                            <td class="p-3 text-right text-emerald-400 font-bold">-${totalItensDescontados} un</td>
+                        `;
+                        tabelaHistorico.insertBefore(tr, tabelaHistorico.firstChild);
+                    } else { 
+                        throw new Error(); 
+                    }
+                } catch (err) { 
+                    tocarBipe(false); 
+                    statusBox.innerHTML = `<span class="text-red-400 font-bold">❌ Erro ao registrar baixa.</span>`; 
+                } finally { 
+                    campoCodigo.disabled = false; 
+                    campoCodigo.value = ''; 
+                    campoCaixas.value = '1'; 
+                    campoCodigo.focus(); 
                 }
             }
         });
 
-        // RECONEXÃO DE FOCO AUTOMÁTICO: se clicar fora, o cursor volta pro código sozínho
-        document.addEventListener('click', function(e) {
-            if (e.target !== campoMesa && e.target !== campoQtd) {
-                campoCodigo.focus();
-            }
+        // Mantém o foco automático no campo de bipagem
+        document.addEventListener('click', function(e) { 
+            if (e.target !== campoCaixas) campoCodigo.focus(); 
         });
 
-        function atualizarStatus(texto, classeCor) {
-            statusBox.innerText = texto;
-            statusBox.className = `bg-slate-950 p-4 rounded-lg border border-slate-800 text-center text-sm font-mono ${classeCor}`;
-        }
-
-        function adicionarAoHistorico(mesa, codigo, qtdEmbalagem, totalUnidades) {
-            historicoVazio.classList.add('hidden');
-            totalBaixasSessao++;
-            contadorBaixas.innerText = `Total: ${totalBaixasSessao}`;
-            const horaStr = new Date().toLocaleTimeString('pt-BR');
-
-            const tr = document.createElement('tr');
-            tr.className = "hover:bg-slate-700/30 transition text-xs border-b border-slate-800";
-            tr.innerHTML = `
-                <td class="p-3 text-slate-500">${horaStr}</td>
-                <td class="p-3 font-bold text-slate-300">${mesa}</td>
-                <td class="p-3 text-slate-400 font-mono">${codigo}</td>
-                <td class="p-3 text-center text-amber-500">${qtdEmbalagem}x</td>
-                <td class="p-3 text-right font-bold text-emerald-400">-${totalUnidades} un</td>
-            `;
-            tabelaHistorico.insertBefore(tr, tabelaHistorico.firstChild);
-        }
-
-        // Dispara a busca da marca Di Solle ao ligar o painel
-        buscarLogoInicial();
+        inicializarDados();
     </script>
 </body>
 </html>
