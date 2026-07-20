@@ -131,7 +131,7 @@
     </main>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyrbGYyMo_-IjjPMJWN1C2uLwIf1xUZRMvLnHE4lQhbnWI2CJyFSpXgz-1MDwZuFUMszQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzM1HhB36DR-N_SrQn4AUXMnb6Mjdm2k2QeSxkkbDnuAvFXMknBojK7QgbWKkvDMT2FxQ/exec";
 
         let modoAtual = 'grade';
         let produtoSelecionado = null;
@@ -142,7 +142,6 @@
         let logoCarregada = false;
         let filtroPrefixo = '';
 
-        // DEFINE A DATA DE HOJE NO CAMPO DE FILTRO COMO PADRÃO
         document.getElementById('filtro-data-registro').value = new Date().toISOString().split('T')[0];
 
         function showLoading(text) {
@@ -150,6 +149,24 @@
             document.getElementById('loading-overlay').classList.remove('hidden');
         }
         function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
+
+        // EXTRATOR INTELIGENTE DE URL / ID DO GOOGLE DRIVE
+        function obterUrlImagem(str) {
+            if (!str) return '';
+            str = String(str).trim();
+            if (!str) return '';
+
+            // Caso venha link completo do Drive
+            if (str.startsWith('http://') || str.startsWith('https://')) {
+                const match = str.match(/\/d\/([a-zA-Z0-9_-]+)/) || str.match(/id=([a-zA-Z0-9_-]+)/);
+                if (match && match[1]) {
+                    return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
+                }
+                return str;
+            }
+            // Caso venha apenas o ID
+            return `https://drive.google.com/thumbnail?id=${str}&sz=w400`;
+        }
 
         async function carregarDadosDaPlanilha(silencioso = false) {
             if (!silencioso) showLoading("Conectando à Di Solle...");
@@ -162,7 +179,8 @@
                 HISTORICO_ENTRADAS = dados.historicoEntradas || [];
                 
                 if (!logoCarregada && dados.logoId) {
-                    document.getElementById('container-logo').innerHTML = `<img src="https://drive.google.com/thumbnail?id=${dados.logoId}&sz=w400" class="h-full object-contain" alt="Logo">`;
+                    const urlLogo = obterUrlImagem(dados.logoId);
+                    document.getElementById('container-logo').innerHTML = `<img src="${urlLogo}" class="h-full object-contain" alt="Logo">`;
                     logoCarregada = true;
                 }
                 
@@ -183,7 +201,6 @@
             const telaRegistros = document.getElementById('tela-registros');
             const titulo = document.getElementById('titulo-pagina');
 
-            // OCULTAR TODAS
             telaGrade.classList.add('hidden');
             telaCalc.classList.add('hidden');
             telaRegistros.classList.add('hidden');
@@ -206,11 +223,8 @@
 
         function filtrarColecao(prefixo, elementoBotao) {
             filtroPrefixo = prefixo;
-            
-            // Atualiza botões
             document.querySelectorAll('.btn-filtro').forEach(btn => btn.classList.remove('btn-filtro-ativo'));
             if (elementoBotao) elementoBotao.classList.add('btn-filtro-ativo');
-
             renderizarGradeProdutos(modoAtual === 'estoque');
         }
 
@@ -218,7 +232,6 @@
             if (!prefixo) return true;
             const c = String(codigo).trim();
             const p = String(prefixo).trim();
-            // Compara original ou removendo zeros à esquerda
             return c.startsWith(p) || c.replace(/^0+/, '').startsWith(p.replace(/^0+/, ''));
         }
 
@@ -236,7 +249,7 @@
             produtosFiltrados.forEach(prod => {
                 const itemEstoque = ESTOQUE_PLANILHA.find(e => String(e.codigo).replace(/^0+/, '') === String(prod.codigo).replace(/^0+/, ''));
                 const qtdAtual = itemEstoque ? itemEstoque.quantidade : 0;
-                const urlImagem = prod.imagemId ? `https://drive.google.com/thumbnail?id=${prod.imagemId}&sz=w400` : '';
+                const urlImagem = obterUrlImagem(prod.imagemId);
 
                 const card = document.createElement('div');
                 card.className = `bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition active:scale-95`;
@@ -244,7 +257,12 @@
 
                 card.innerHTML = `
                     <div class="h-32 bg-gray-50 flex items-center justify-center relative border-b border-gray-100 overflow-hidden">
-                        ${prod.imagemId ? `<img src="${urlImagem}" class="w-full h-full object-cover">` : `<div class="text-gray-400 font-bold text-[10px] text-center p-2">SEM FOTO<br>${prod.codigo}</div>`}
+                        ${urlImagem ? `
+                            <img src="${urlImagem}" class="w-full h-full object-cover" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+                            <div class="hidden text-gray-400 font-bold text-[10px] text-center p-2">SEM FOTO<br>${prod.codigo}</div>
+                        ` : `
+                            <div class="text-gray-400 font-bold text-[10px] text-center p-2">SEM FOTO<br>${prod.codigo}</div>
+                        `}
                         ${exibirQuantidade ? `<div class="absolute bottom-2 right-2 bg-slate-800 text-emerald-400 text-xs font-bold font-mono px-2 py-1 rounded shadow border border-slate-700">Qtd: ${qtdAtual}</div>` : ''}
                     </div>
                     <div class="p-3 flex-1 flex flex-col justify-between">
@@ -259,13 +277,12 @@
         function renderizarTabelaRegistros() {
             const corpoTabela = document.getElementById('tabela-registros-corpo');
             const mensagemVazio = document.getElementById('registros-vazio');
-            const dataFiltro = document.getElementById('filtro-data-registro').value; // Formato YYYY-MM-DD
+            const dataFiltro = document.getElementById('filtro-data-registro').value;
 
             corpoTabela.innerHTML = '';
 
             const registrosFiltrados = HISTORICO_ENTRADAS.filter(item => {
                 if (!dataFiltro) return true;
-                // Converter data do registro (Ex: 2026-07-20T10:43:00) para YYYY-MM-DD
                 const dataItem = new Date(item.dataHora).toISOString().split('T')[0];
                 return dataItem === dataFiltro;
             });
@@ -299,8 +316,9 @@
             document.getElementById('calc-produto-codigo').innerText = produto.codigo;
             document.getElementById('calc-produto-nome').innerText = produto.descricao;
             
+            const urlImg = obterUrlImagem(produto.imagemId);
             const containerFoto = document.getElementById('calc-container-foto');
-            containerFoto.innerHTML = produto.imagemId ? `<img src="https://drive.google.com/thumbnail?id=${produto.imagemId}&sz=w400" class="w-full h-full object-cover">` : `<div class="text-gray-400 text-xs font-bold">SEM FOTO</div>`;
+            containerFoto.innerHTML = urlImg ? `<img src="${urlImg}" class="w-full h-full object-cover" onerror="this.parentNode.innerHTML='<div class=\'text-gray-400 text-xs font-bold\'>SEM FOTO</div>';">` : `<div class="text-gray-400 text-xs font-bold">SEM FOTO</div>`;
             mudarModo('calculadora');
         }
 
@@ -339,17 +357,14 @@
             }
         }
 
-        // EXECUÇÃO INICIAL
         carregarDadosDaPlanilha();
 
-        // REFRESH EM TEMPO REAL: 15 segundos
         setInterval(() => {
             if (modoAtual !== 'calculadora') {
                 carregarDadosDaPlanilha(true);
             }
         }, 15000);
 
-        // SERVICE WORKER PARA INSTALAÇÃO PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').catch(() => {});
