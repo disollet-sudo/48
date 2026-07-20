@@ -20,7 +20,7 @@
             <span class="animate-pulse text-gray-400">Carregando Logo...</span>
         </div>
         <div class="flex items-center space-x-3">
-            <!-- BOTÃO MESA (CLICÁVEL PARA EDICÃO E SALVAMENTO) -->
+            <!-- BOTÃO MESA (EDITÁVEL E PERSISTENTE) -->
             <button onclick="alterarMesa()" title="Clique para alterar a mesa" class="text-xs font-mono bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-md border border-slate-700 text-emerald-400 font-bold transition flex items-center space-x-1 cursor-pointer">
                 <span id="label-mesa-ativa">Mesa: MESA 01</span>
                 <span class="text-[10px] text-slate-400">✏️</span>
@@ -46,8 +46,9 @@
                 </div>
 
                 <div class="mb-6">
-                    <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Código de Barras (Bipar)</label>
-                    <input type="text" id="campo-codigo" placeholder="Bipe o código aqui..." autofocus autocomplete="off" class="w-full bg-slate-950 border-2 border-emerald-500 rounded-lg p-4 text-xl font-mono text-emerald-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                    <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Código de Barras (Máx. 13 Dígitos)</label>
+                    <!-- AJUSTE 1: MAXLENGTH 13 DÍGITOS -->
+                    <input type="text" id="campo-codigo" maxlength="13" placeholder="Bipe o código..." autofocus autocomplete="off" class="w-full bg-slate-950 border-2 border-emerald-500 rounded-lg p-4 text-xl font-mono text-emerald-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-400">
                     <p class="text-[10px] text-slate-500 font-mono mt-1">O cursor retorna para cá automaticamente após cada bipe.</p>
                 </div>
             </div>
@@ -70,11 +71,12 @@
                 <table class="w-full text-left text-sm font-mono">
                     <thead>
                         <tr class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700">
-                            <th class="p-3">Hora</th>
-                            <th class="p-3">Código</th>
+                            <th class="p-3 w-20">Hora</th>
+                            <th class="p-3 w-36">Código</th>
+                            <!-- AJUSTE 2: COLUNA COM QUEBRA DE LINHA LIBERADA -->
                             <th class="p-3">Descrição</th>
-                            <th class="p-3 text-center">Caixas</th>
-                            <th class="p-3 text-right text-emerald-400">Total Itens</th>
+                            <th class="p-3 text-center w-20">Caixas</th>
+                            <th class="p-3 text-right text-emerald-400 w-28">Total Itens</th>
                         </tr>
                     </thead>
                     <tbody id="tabela-historico" class="divide-y divide-slate-700/50"></tbody>
@@ -87,9 +89,8 @@
     </main>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzdgydgiUWTGPkdzji7pya6kyZzUxA_yozVuDLAcKfiK04fRG3yphHuit3uKIrO9Pu38A/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbylyB1zTZxny_5W9qvb602YWsG3ydM49ugJsvRqZvzn2A1lDgI9h5ydTefRL18MMJq45g/exec";
 
-        // GESTÃO DO NOME DA MESA (PERSISTENTE EM LOCALSTORAGE)
         let MESA_ATUAL = localStorage.getItem('mesa_expedicao') || "MESA 01";
 
         function atualizarDisplayMesa() {
@@ -138,17 +139,19 @@
         function resolverProduto(codigoBipado) {
             const codLimpo = String(codigoBipado).trim();
 
-            // 1. Procura na aba "REGRAS"
-            const regraEncontrada = REGRAS_CONVERSAO.find(r => String(r.codigoBipado).trim() === codLimpo);
-            if (regraEncontrada) {
+            // 1. Procura na aba REGRAS
+            const regra = REGRAS_CONVERSAO.find(r => String(r.codigoBipado).trim() === codLimpo);
+            if (regra) {
+                const qtdPorCaixa = (parseInt(regra.unidade) || 1) * (parseInt(regra.cx) || 1);
                 return {
-                    codigoBase: regraEncontrada.codigoBase,
-                    descricao: regraEncontrada.descricao || "PRODUTO CONVERTIDO VIA REGRA",
-                    fatorEmbalagem: parseInt(regraEncontrada.fator) || 1
+                    codigoBase: codLimpo,
+                    descricao: `CONJUNTO / REGRA (${regra.itens.length} itens desmembrados)`,
+                    fatorEmbalagem: qtdPorCaixa,
+                    temRegra: true
                 };
             }
 
-            // 2. Procura na aba "LISTA DE ITENS"
+            // 2. Procura na LISTA DE ITENS / PRODUTOS
             const itemEncontrado = LISTA_ITENS.find(i => 
                 String(i.produto).trim() === codLimpo || 
                 String(i.codigoEan).trim() === codLimpo || 
@@ -159,15 +162,16 @@
                 return {
                     codigoBase: itemEncontrado.produto,
                     descricao: itemEncontrado.descricao,
-                    fatorEmbalagem: parseInt(itemEncontrado.qtdeEmbalag) || 1
+                    fatorEmbalagem: parseInt(itemEncontrado.qtdeEmbalag) || 1,
+                    temRegra: false
                 };
             }
 
-            // 3. Fallback (Código sem regra mapeada)
             return {
                 codigoBase: codLimpo,
-                descricao: "ITEM SEM REGRA DE ESTOQUE",
-                fatorEmbalagem: 1
+                descricao: "ITEM SEM CADASTRO DE ESTOQUE",
+                fatorEmbalagem: 1,
+                temRegra: false
             };
         }
 
@@ -205,7 +209,7 @@
                 statusBox.innerText = "Registrando operação...";
 
                 const infoProduto = resolverProduto(codigoBipado);
-                const totalItensDescontados = caixasBipadas * infoProduto.fatorEmbalagem;
+                const totalItensCalculados = caixasBipadas * infoProduto.fatorEmbalagem;
 
                 try {
                     const response = await fetch(API_URL, {
@@ -213,11 +217,10 @@
                         body: JSON.stringify({ 
                             action: "registrarSaidaExakta", 
                             codigoBipado: codigoBipado,
-                            codigoBase: infoProduto.codigoBase,
-                            descricao: infoProduto.descricao,
                             caixas: caixasBipadas,
-                            totalItens: totalItensDescontados,
-                            mesa: MESA_ATUAL 
+                            totalItens: totalItensCalculados,
+                            mesa: MESA_ATUAL,
+                            descricao: infoProduto.descricao
                         })
                     });
                     
@@ -225,21 +228,25 @@
 
                     if (resultado.success) {
                         tocarBipe(true);
-                        const msgEstoque = resultado.descontouEstoque ? "Estoque Atualizado" : "Registrado em Saídas (Sem desconto de estoque)";
-                        statusBox.innerHTML = `<span class="text-emerald-400 font-bold">✅ Baixa Processada!</span><br><span class="text-xs text-slate-300">${infoProduto.descricao} (${msgEstoque})</span>`;
+                        const msgEstoque = resultado.descontouEstoque 
+                            ? `Estoque Atualizado (${resultado.itensAfetados || 1} item(ns))` 
+                            : "Registrado em Saídas (Sem alteração no estoque)";
+                        
+                        statusBox.innerHTML = `<span class="text-emerald-400 font-bold">✅ Baixa Processada!</span><br><span class="text-xs text-slate-300 leading-tight block mt-1">${infoProduto.descricao}<br>(${msgEstoque})</span>`;
                         
                         historicoVazio.classList.add('hidden');
                         totalBaixasSessao++;
                         contadorBaixas.innerText = `Total Operações: ${totalBaixasSessao}`;
 
+                        // REGISTRO NA TABELA COM QUEBRA DE LINHA NO ITEM
                         const tr = document.createElement('tr');
                         tr.className = "text-xs border-b border-slate-800 hover:bg-slate-800/50";
                         tr.innerHTML = `
-                            <td class="p-3 text-slate-500">${new Date().toLocaleTimeString()}</td>
-                            <td class="p-3 font-mono font-bold text-slate-300">${codigoBipado}</td>
-                            <td class="p-3 text-slate-200 uppercase truncate max-w-[200px]" title="${infoProduto.descricao}">${infoProduto.descricao}</td>
-                            <td class="p-3 text-center text-amber-400 font-bold">${caixasBipadas} Cx</td>
-                            <td class="p-3 text-right text-emerald-400 font-bold">-${totalItensDescontados} un</td>
+                            <td class="p-3 text-slate-500 whitespace-nowrap">${new Date().toLocaleTimeString()}</td>
+                            <td class="p-3 font-mono font-bold text-slate-300 whitespace-nowrap">${codigoBipado}</td>
+                            <td class="p-3 text-slate-200 uppercase whitespace-normal break-words font-semibold leading-snug">${infoProduto.descricao}</td>
+                            <td class="p-3 text-center text-amber-400 font-bold whitespace-nowrap">${caixasBipadas} Cx</td>
+                            <td class="p-3 text-right text-emerald-400 font-bold whitespace-nowrap">-${totalItensCalculados} un</td>
                         `;
                         tabelaHistorico.insertBefore(tr, tabelaHistorico.firstChild);
                     } else { 
