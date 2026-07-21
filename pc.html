@@ -106,6 +106,16 @@
                 <h3 class="text-lg font-bold text-slate-200">Registros de Saída</h3>
                 <button onclick="fecharRegistros()" class="text-slate-400 hover:text-white text-xl leading-none">✕</button>
             </div>
+            <div class="flex items-center flex-wrap gap-4 px-4 py-3 border-b border-slate-800 bg-slate-950/40">
+                <label class="flex items-center space-x-2 text-xs font-mono text-slate-300 cursor-pointer">
+                    <input type="checkbox" id="filtro-mesa-atual" checked onchange="abrirRegistros()" class="accent-emerald-500">
+                    <span>Somente mesa atual (<span id="filtro-mesa-label"></span>)</span>
+                </label>
+                <label class="flex items-center space-x-2 text-xs font-mono text-slate-300 cursor-pointer">
+                    <input type="checkbox" id="filtro-somente-hoje" checked onchange="abrirRegistros()" class="accent-emerald-500">
+                    <span>Somente hoje</span>
+                </label>
+            </div>
             <div class="flex-1 overflow-y-auto p-4">
                 <table class="w-full text-left text-xs font-mono">
                     <thead>
@@ -158,7 +168,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycby7_ntv672O5hl9cQNWW98QvWMc6JvAg5Iwg74NY2c6BoPw4SqNskCYs83uzaI3MOKLoQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbw3SI7y0G4XAY164q2or2RRCrhLHejvUs6V_yv5_cI4RLhg4yOJsFHNzBA6nslA1h2CGA/exec";
 
         let MESA_ATUAL = localStorage.getItem('mesa_expedicao') || "MESA 01";
 
@@ -172,6 +182,7 @@
                 MESA_ATUAL = novaMesa.trim().toUpperCase();
                 localStorage.setItem('mesa_expedicao', MESA_ATUAL);
                 atualizarDisplayMesa();
+                carregarHistoricoDoDia(); // recarrega o painel já filtrado pela nova mesa
             }
         }
 
@@ -200,6 +211,53 @@
                 }
             } catch (e) {
                 document.getElementById('container-logo').innerText = "DI SOLLE";
+            }
+
+            carregarHistoricoDoDia();
+        }
+
+        // Puxa da planilha os lançamentos de HOJE da MESA_ATUAL e repopula o painel
+        // "Últimas Saídas Registradas" + contadores — assim, se fechar e reabrir o
+        // app (ou trocar de mesa), a tela sempre reflete o que já foi bipado no dia.
+        async function carregarHistoricoDoDia() {
+            tabelaHistorico.innerHTML = '';
+            totalBaixasSessao = 0;
+            totalItensSessao = 0;
+            historicoVazio.classList.add('hidden');
+            statusBox.innerText = "Carregando lançamentos de hoje...";
+
+            try {
+                const url = `${API_URL}?action=buscarRegistrosSaida&mesa=${encodeURIComponent(MESA_ATUAL)}&somenteHoje=true&limite=200&nocache=${Math.random()}`;
+                const response = await fetch(url);
+                const dados = await response.json();
+                const registros = dados.registros || []; // já vem do mais recente pro mais antigo
+
+                if (registros.length === 0) {
+                    historicoVazio.classList.remove('hidden');
+                } else {
+                    registros.forEach(reg => {
+                        totalBaixasSessao++;
+                        totalItensSessao += reg.totalItens;
+
+                        const hora = reg.dataHora ? new Date(reg.dataHora).toLocaleTimeString() : "";
+                        const tr = document.createElement('tr');
+                        tr.className = "text-xs border-b border-slate-800 hover:bg-slate-800/50";
+                        tr.innerHTML = `
+                            <td class="p-3 text-slate-500 whitespace-nowrap">${hora}</td>
+                            <td class="p-3 font-mono font-bold text-slate-300 whitespace-nowrap">${reg.codigo}</td>
+                            <td class="p-3 text-slate-200 uppercase whitespace-normal break-words font-semibold leading-snug">${reg.descricao}</td>
+                            <td class="p-3 text-center text-amber-400 font-bold whitespace-nowrap">${reg.caixas} Cx</td>
+                            <td class="p-3 text-right text-emerald-400 font-bold whitespace-nowrap">-${reg.totalItens} un</td>
+                        `;
+                        tabelaHistorico.appendChild(tr);
+                    });
+                }
+
+                contadorBaixas.innerText = `Total Operações: ${totalBaixasSessao}`;
+                contadorItens.innerText = `Total Itens: ${totalItensSessao}`;
+                statusBox.innerText = "Aguardando leitura de código...";
+            } catch (err) {
+                statusBox.innerHTML = `<span class="text-red-400 font-bold">❌ Erro ao carregar histórico do dia.</span>`;
             }
         }
 
@@ -313,12 +371,19 @@
 
         async function abrirRegistros() {
             modalRegistros.classList.remove('hidden');
+            document.getElementById('filtro-mesa-label').innerText = MESA_ATUAL;
+
             tabelaRegistros.innerHTML = '';
             registrosVazio.classList.add('hidden');
             registrosCarregando.classList.remove('hidden');
 
+            const somenteMesaAtual = document.getElementById('filtro-mesa-atual').checked;
+            const somenteHoje = document.getElementById('filtro-somente-hoje').checked;
+            const paramMesa = somenteMesaAtual ? `&mesa=${encodeURIComponent(MESA_ATUAL)}` : '';
+            const paramHoje = `&somenteHoje=${somenteHoje}`;
+
             try {
-                const response = await fetch(`${API_URL}?action=buscarRegistrosSaida&limite=150&nocache=${Math.random()}`);
+                const response = await fetch(`${API_URL}?action=buscarRegistrosSaida&limite=200${paramMesa}${paramHoje}&nocache=${Math.random()}`);
                 const dados = await response.json();
                 registrosCarregando.classList.add('hidden');
 
@@ -411,6 +476,7 @@
                     setTimeout(() => {
                         fecharEdicao();
                         abrirRegistros(); // recarrega a lista já com o valor corrigido
+                        carregarHistoricoDoDia(); // reflete a correção no painel principal também
                     }, 700);
                 } else {
                     editStatus.innerText = "❌ Erro: " + (resultado.error || "não foi possível salvar.");
