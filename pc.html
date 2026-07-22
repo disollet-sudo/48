@@ -99,6 +99,20 @@
         </section>
     </main>
 
+    <!-- MODAL DE ERRO / AVISO NO MEIO DA TELA (AJUSTE 1) -->
+    <div id="modal-erro" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-red-500 rounded-2xl p-6 max-w-md w-full shadow-2xl text-center">
+            <div class="text-5xl mb-3">⚠️</div>
+            <h3 class="text-xl font-bold text-red-500 mb-2 font-mono">ITEM NÃO ENCONTRADO</h3>
+            <p id="modal-erro-msg" class="text-slate-200 text-sm font-mono mb-6 leading-relaxed">
+                O código bipado não existe ou não está cadastrado na aba Produto.
+            </p>
+            <button id="btn-fechar-erro" onclick="fecharModalErro()" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-xl transition text-sm font-mono cursor-pointer shadow-lg active:scale-95">
+                OK / FECHAR AVISO (ENTER)
+            </button>
+        </div>
+    </div>
+
     <!-- MODAL: VER / EDITAR REGISTROS -->
     <div id="modal-registros" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-5xl max-h-[85vh] flex flex-col shadow-2xl">
@@ -197,6 +211,39 @@
 
         let totalBaixasSessao = 0;
         let totalItensSessao = 0;
+
+        // FUNÇÕES DO MODAL DE ERRO NO MEIO DA TELA (AJUSTE 1)
+        function abrirModalErro(mensagem) {
+            const modal = document.getElementById('modal-erro');
+            const msgBox = document.getElementById('modal-erro-msg');
+            msgBox.innerText = mensagem;
+            modal.classList.remove('hidden');
+            tocarBipe(false);
+
+            setTimeout(() => {
+                const btn = document.getElementById('btn-fechar-erro');
+                if (btn) btn.focus();
+            }, 50);
+        }
+
+        function fecharModalErro() {
+            const modal = document.getElementById('modal-erro');
+            modal.classList.add('hidden');
+            setTimeout(() => {
+                campoCodigo.focus();
+            }, 50);
+        }
+
+        // Permite fechar o modal com Enter, Esc ou Espaço
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('modal-erro');
+            if (modal && !modal.classList.contains('hidden')) {
+                if (e.key === 'Enter' || e.key === 'Escape' || e.key === ' ') {
+                    e.preventDefault();
+                    fecharModalErro();
+                }
+            }
+        });
 
         async function inicializarDados() {
             atualizarDisplayMesa();
@@ -331,30 +378,41 @@
                         `;
                         tabelaHistorico.insertBefore(tr, tabelaHistorico.firstChild);
                     } else {
-                        throw new Error(resultado.error || "item não existe");
+                        throw new Error(resultado.error || "O item lido não existe na aba Produto!");
                     }
                 } catch (err) {
-                    tocarBipe(false);
-                    var msgErro = err.message || "Erro ao registrar baixa.";
+                    var msgErro = err.message || "Item não existe ou não cadastrado.";
                     statusBox.innerHTML = `<span class="text-red-400 font-bold">❌ ${msgErro}</span>`;
+                    abrirModalErro(msgErro); // DISPARA O MODAL CENTRALIZADO NA TELA
                 } finally {
                     campoCodigo.disabled = false;
                     campoCodigo.value = '';
                     campoCaixas.value = '1';
                     campoObservacao.value = '';
-                    campoCodigo.focus();
+                    
+                    // Se o modal de erro NÃO estiver aberto, devolve o foco para o input
+                    const modalErro = document.getElementById('modal-erro');
+                    if (!modalErro || modalErro.classList.contains('hidden')) {
+                        campoCodigo.focus();
+                    }
                 }
             }
         });
 
         document.addEventListener('click', function(e) {
+            const modalErro = document.getElementById('modal-erro');
+            const modalErroAberto = modalErro && !modalErro.classList.contains('hidden');
+
             if (
+                !modalErroAberto &&
                 e.target !== campoCaixas &&
                 e.target !== campoObservacao &&
                 !e.target.closest('button') &&
                 !e.target.closest('#modal-registros') &&
                 !e.target.closest('#modal-editar')
-            ) campoCodigo.focus();
+            ) {
+                campoCodigo.focus();
+            }
         });
 
         const modalRegistros = document.getElementById('modal-registros');
