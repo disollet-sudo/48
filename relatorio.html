@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Executivo & Relatórios - Di Solle</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <!-- NAVBAR SUPERIOR -->
+    <nav class="bg-slate-900 border-b border-slate-800 p-4 shadow-lg flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center space-x-4">
+            <div id="container-logo" class="h-9 w-36 flex items-center text-slate-300 font-bold text-sm tracking-wide">
+                <span class="animate-pulse text-slate-500">DI SOLLE</span>
+            </div>
+            <h1 class="text-base font-mono font-bold text-slate-200 border-l border-slate-700 pl-4">
+                📈 Painel de Indicadores
+            </h1>
+        </div>
+        
+        <div class="flex items-center space-x-3">
+            <select id="filtro-periodo" onchange="carregarRelatorios()" class="bg-slate-800 border border-slate-700 text-xs font-mono text-slate-200 rounded-lg p-2 focus:outline-none focus:border-sky-500">
+                <option value="hoje">Somente Hoje</option>
+                <option value="geral">Todo o Histórico</option>
+            </select>
+
+            <button onclick="carregarRelatorios()" class="bg-sky-600 hover:bg-sky-500 text-white font-mono text-xs font-bold px-3 py-2 rounded-lg transition flex items-center space-x-1 cursor-pointer">
+                <span>🔄 Atualizar</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6">
+
+        <!-- 1. CARDS KPIS (INDICADORES CHAVE) -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- KPI 1 -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-md">
+                <div class="flex justify-between items-center text-slate-400 text-xs font-mono uppercase">
+                    <span>Expedição (Peças)</span>
+                    <span class="text-emerald-400">📦</span>
+                </div>
+                <div id="kpi-total-pecas" class="text-3xl font-mono font-bold text-emerald-400 mt-2">0</div>
+                <p id="kpi-total-pecas-sub" class="text-[11px] text-slate-500 font-mono mt-1">Total de peças baixadas</p>
+            </div>
+
+            <!-- KPI 2 -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-md">
+                <div class="flex justify-between items-center text-slate-400 text-xs font-mono uppercase">
+                    <span>Caixas Movimentadas</span>
+                    <span class="text-amber-400">🏷️</span>
+                </div>
+                <div id="kpi-total-caixas" class="text-3xl font-mono font-bold text-amber-400 mt-2">0</div>
+                <p class="text-[11px] text-slate-500 font-mono mt-1">Volume de caixas bipadas</p>
+            </div>
+
+            <!-- KPI 3 -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-md">
+                <div class="flex justify-between items-center text-slate-400 text-xs font-mono uppercase">
+                    <span>Mesa Mais Ativa</span>
+                    <span class="text-sky-400">🖥️</span>
+                </div>
+                <div id="kpi-mesa-lider" class="text-2xl font-mono font-bold text-sky-400 mt-2">---</div>
+                <p id="kpi-mesa-lider-sub" class="text-[11px] text-slate-500 font-mono mt-1">Maior volume expedido</p>
+            </div>
+
+            <!-- KPI 4 -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-md">
+                <div class="flex justify-between items-center text-slate-400 text-xs font-mono uppercase">
+                    <span>Saldo em Estoque</span>
+                    <span class="text-indigo-400">🏢</span>
+                </div>
+                <div id="kpi-saldo-estoque" class="text-3xl font-mono font-bold text-indigo-400 mt-2">0</div>
+                <p class="text-[11px] text-slate-500 font-mono mt-1">Peças em saldo físico</p>
+            </div>
+        </section>
+
+        <!-- 2. LINHA DE GRÁFICOS 1: MESA E FLUXO POR HORA -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- GRÁFICO POR MESA -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-md flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold font-mono text-slate-200">Produção / Expedição por Mesa</h2>
+                    <span class="text-[10px] bg-slate-800 text-slate-400 font-mono px-2 py-0.5 rounded">MESA 1, 2 e 3</span>
+                </div>
+                <div class="relative flex-1 flex items-center justify-center min-h-[220px]">
+                    <canvas id="chartMesas"></canvas>
+                </div>
+            </div>
+
+            <!-- GRÁFICO RITMO POR HORA -->
+            <div class="lg:col-span-2 bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-md flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold font-mono text-slate-200">Ritmo de Expedição por Hora (Peças)</h2>
+                    <span class="text-[10px] bg-slate-800 text-slate-400 font-mono px-2 py-0.5 rounded">Fluxo do Dia</span>
+                </div>
+                <div class="relative flex-1 min-h-[220px]">
+                    <canvas id="chartHoras"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. LINHA DE GRÁFICOS 2: TOP PRODUTOS E ESTOQUE -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- TOP 5 MAIS EXPEDIDOS -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold font-mono text-slate-200">🔥 Top 5 Itens Mais Expedidos</h2>
+                    <span class="text-[10px] text-emerald-400 font-mono font-bold">Maior Saída</span>
+                </div>
+                <div class="relative min-h-[240px]">
+                    <canvas id="chartTopSaidas"></canvas>
+                </div>
+            </div>
+
+            <!-- MAIORES SALDOS DE ESTOQUE -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold font-mono text-slate-200">📊 Curva de Saldo em Estoque</h2>
+                    <span class="text-[10px] text-sky-400 font-mono font-bold">Top Itens Saldo</span>
+                </div>
+                <div class="relative min-h-[240px]">
+                    <canvas id="chartTopEstoque"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. TABELA DE DETALHAMENTO DE PRODUTOS -->
+        <section class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-md">
+            <h2 class="text-sm font-bold font-mono text-slate-200 mb-4">📋 Resumo de Giro de Estoque por Item</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left font-mono text-xs">
+                    <thead>
+                        <tr class="bg-slate-950 text-slate-400 uppercase text-[10px] border-b border-slate-800">
+                            <th class="p-3">Código</th>
+                            <th class="p-3">Descrição / Item</th>
+                            <th class="p-3 text-center">Total Caixas</th>
+                            <th class="p-3 text-right text-emerald-400">Total Expedido (Un)</th>
+                            <th class="p-3 text-right text-indigo-400">Saldo Atual Estoque</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-resumo" class="divide-y divide-slate-800/60">
+                        <tr>
+                            <td colspan="5" class="p-6 text-center text-slate-500">Carregando dados...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbxuyQdkfZgE8VJizyVrYs2GhpdlrHRSiyPLYR-GJsvp65Wwaly1fTwLpPLGXus6ooaZGQ/exec";
+
+        let chartMesasInstance = null;
+        let chartHorasInstance = null;
+        let chartTopSaidasInstance = null;
+        let chartTopEstoqueInstance = null;
+
+        async function carregarRelatorios() {
+            const periodo = document.getElementById('filtro-periodo').value;
+            
+            try {
+                const response = await fetch(`${API_URL}?action=buscarDadosRelatorio&periodo=${periodo}&nocache=${Math.random()}`);
+                const res = await response.json();
+
+                if (!res.success) {
+                    alert("Erro ao buscar dados do relatório.");
+                    return;
+                }
+
+                // 1. Atualiza KPIs
+                document.getElementById('kpi-total-pecas').innerText = res.kpis.totalPecas.toLocaleString('pt-BR');
+                document.getElementById('kpi-total-caixas').innerText = res.kpis.totalCaixas.toLocaleString('pt-BR');
+                document.getElementById('kpi-mesa-lider').innerText = res.kpis.mesaLider || "---";
+                document.getElementById('kpi-saldo-estoque').innerText = res.kpis.saldoEstoqueTotal.toLocaleString('pt-BR');
+
+                // Logo
+                if (res.logoId) {
+                    document.getElementById('container-logo').innerHTML = `<img src="https://drive.google.com/thumbnail?id=${res.logoId}&sz=w400" class="h-full object-contain">`;
+                }
+
+                // 2. Renderiza Gráficos
+                renderizarGraficoMesas(res.porMesa);
+                renderizarGraficoHoras(res.porHora);
+                renderizarGraficoTopSaidas(res.topSaidas);
+                renderizarGraficoTopEstoque(res.topEstoque);
+
+                // 3. Renderiza Tabela Resumo
+                renderizarTabela(res.resumoProdutos);
+
+            } catch (e) {
+                console.error("Erro na atualização do relatório:", e);
+            }
+        }
+
+        // --- GRÁFICO 1: MESAS (DONUT) ---
+        function renderizarGraficoMesas(dadosMesa) {
+            const ctx = document.getElementById('chartMesas').getContext('2d');
+            if (chartMesasInstance) chartMesasInstance.destroy();
+
+            const labels = Object.keys(dadosMesa);
+            const data = labels.map(l => dadosMesa[l].total);
+
+            chartMesasInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#10b981', '#0284c7', '#f59e0b', '#8b5cf6', '#ec4899'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'monospace', size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        // --- GRÁFICO 2: FLUXO POR HORA (LINE) ---
+        function renderizarGraficoHoras(dadosHora) {
+            const ctx = document.getElementById('chartHoras').getContext('2d');
+            if (chartHorasInstance) chartHorasInstance.destroy();
+
+            const labels = Object.keys(dadosHora);
+            const data = Object.values(dadosHora);
+
+            chartHorasInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Peças Expedidas',
+                        data: data,
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#0284c7'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { family: 'monospace', size: 10 } }, grid: { color: '#1e293b' } },
+                        y: { ticks: { color: '#64748b', font: { family: 'monospace', size: 10 } }, grid: { color: '#1e293b' } }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // --- GRÁFICO 3: TOP SAÍDAS (HORIZONTAL BAR) ---
+        function renderizarGraficoTopSaidas(topSaidas) {
+            const ctx = document.getElementById('chartTopSaidas').getContext('2d');
+            if (chartTopSaidasInstance) chartTopSaidasInstance.destroy();
+
+            const labels = topSaidas.map(i => i.descricao.length > 25 ? i.descricao.substring(0, 22) + '...' : i.descricao);
+            const data = topSaidas.map(i => i.total);
+
+            chartTopSaidasInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Expedido',
+                        data: data,
+                        backgroundColor: '#10b981',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { family: 'monospace', size: 10 } }, grid: { color: '#1e293b' } },
+                        y: { ticks: { color: '#94a3b8', font: { family: 'monospace', size: 10 } }, grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // --- GRÁFICO 4: TOP ESTOQUE (BAR) ---
+        function renderizarGraficoTopEstoque(topEstoque) {
+            const ctx = document.getElementById('chartTopEstoque').getContext('2d');
+            if (chartTopEstoqueInstance) chartTopEstoqueInstance.destroy();
+
+            const labels = topEstoque.map(i => i.descricao.length > 22 ? i.descricao.substring(0, 20) + '...' : i.descricao);
+            const data = topEstoque.map(i => i.quantidade);
+
+            chartTopEstoqueInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Saldo Estoque',
+                        data: data,
+                        backgroundColor: '#6366f1',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#94a3b8', font: { family: 'monospace', size: 9 } }, grid: { display: false } },
+                        y: { ticks: { color: '#64748b', font: { family: 'monospace', size: 10 } }, grid: { color: '#1e293b' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // --- TABELA RESUMO ---
+        function renderizarTabela(resumo) {
+            const tbody = document.getElementById('tabela-resumo');
+            tbody.innerHTML = '';
+
+            if (!resumo || resumo.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">Nenhum registro encontrado.</td></tr>';
+                return;
+            }
+
+            resumo.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 border-b border-slate-800/40";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-300 whitespace-nowrap">${item.codigo}</td>
+                    <td class="p-3 text-slate-200 uppercase">${item.descricao}</td>
+                    <td class="p-3 text-center text-amber-400 font-bold">${item.caixas}</td>
+                    <td class="p-3 text-right text-emerald-400 font-bold">${item.totalExpedido.toLocaleString('pt-BR')}</td>
+                    <td class="p-3 text-right text-indigo-400 font-bold">${item.saldoEstoque.toLocaleString('pt-BR')}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Carrega ao iniciar
+        carregarRelatorios();
+    </script>
+</body>
+</html>
