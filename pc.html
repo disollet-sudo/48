@@ -1,339 +1,543 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DevStock - Expedição Di Solle</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    body {
-      background-color: #f4f6f9;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      background: #ffffff;
-      padding: 25px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    h2 {
-      margin-top: 0;
-      color: #333;
-      border-bottom: 2px solid #0056b3;
-      padding-bottom: 10px;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 5px;
-      color: #555;
-    }
-    input[type="text"], input[type="number"], select {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
-    }
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-    }
-    .btn-container {
-      margin-top: 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    button {
-      padding: 12px 20px;
-      font-size: 16px;
-      font-weight: bold;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-principal {
-      background-color: #0056b3;
-      color: white;
-    }
-    .btn-principal:hover {
-      background-color: #004085;
-    }
-    .btn-manual {
-      background-color: #ff9800;
-      color: white;
-    }
-    .btn-manual:hover {
-      background-color: #e68a00;
-    }
-    .btn-cancelar {
-      background-color: #6c757d;
-      color: white;
-    }
-    .btn-confirmar {
-      background-color: #28a745;
-      color: white;
-    }
-    /* Tabela de Histórico */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 25px;
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #ddd;
-      text-align: left;
-    }
-    th {
-      background-color: #f8f9fa;
-      color: #333;
-    }
-    /* Modal Pop-up */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.6);
-      z-index: 999;
-    }
-    .modal-content {
-      background-color: #fff;
-      margin: 10% auto;
-      padding: 25px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 450px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Expedição - Di Solle</title>
+
+    <link rel="manifest" href="manifest-pc.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col m-0 p-0">
 
-  <div class="container">
-    <h2>DevStock - Expedição Di Solle</h2>
+    <!-- NAVBAR SUPERIOR -->
+    <nav class="bg-white border-b border-gray-200 p-4 shadow-sm flex justify-between items-center">
+        <div id="container-logo" class="h-10 w-44 flex items-center justify-start text-gray-800 font-bold text-sm tracking-wide">
+            <span class="animate-pulse text-gray-400">Carregando Logo...</span>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="abrirRegistros()" class="text-xs font-mono bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-md border border-slate-700 text-sky-400 font-bold transition flex items-center space-x-1 cursor-pointer">
+                <span>📋 Ver Registros</span>
+            </button>
 
-    <div class="grid-2">
-      <div class="form-group">
-        <label for="selectMesa">Mesa de Operação:</label>
-        <select id="selectMesa" onchange="carregarRegistrosSaida()">
-          <option value="MESA 01">MESA 01</option>
-          <option value="MESA 02">MESA 02</option>
-          <option value="MESA 03">MESA 03</option>
-          <option value="MESA 04">MESA 04</option>
-        </select>
-      </div>
+            <button onclick="alterarMesa()" title="Clique para alterar a mesa" class="text-xs font-mono bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-md border border-slate-700 text-emerald-400 font-bold transition flex items-center space-x-1 cursor-pointer">
+                <span id="label-mesa-ativa">Mesa: MESA 01</span>
+                <span class="text-[10px] text-slate-400">✏️</span>
+            </button>
 
-      <div class="form-group">
-        <label for="inputCaixas">Caixas:</label>
-        <input type="number" id="inputCaixas" value="1" min="1">
-      </div>
+            <div class="text-xs font-mono bg-slate-800 px-3 py-1.5 rounded-md border border-slate-700 text-amber-400 font-bold">
+                Modo: Baixa por Embalagem
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 p-6 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- PAINEL ESQUERDO: BIPAGEM -->
+        <section class="lg:col-span-1 bg-slate-800 p-6 rounded-xl border border-slate-700 flex flex-col justify-between shadow-md">
+            <div>
+                <h2 class="text-lg font-bold mb-4 text-slate-200 border-b border-slate-700 pb-2">Saída de Materiais</h2>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Qtd de Caixas / Embalagens Bipadas</label>
+                    <input type="number" id="campo-caixas" value="1" min="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-2xl font-mono font-bold text-amber-400 focus:outline-none focus:border-amber-500">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Observação (opcional)</label>
+                    <input type="text" id="campo-observacao" placeholder="Ex: avaria, troca, ajuste..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm font-mono text-slate-200 focus:outline-none focus:border-sky-500">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Código de Barras (Máx. 13 Dígitos)</label>
+                    <input type="text" id="campo-codigo" maxlength="13" placeholder="Bipe o código..." autofocus autocomplete="off" class="w-full bg-slate-950 border-2 border-emerald-500 rounded-lg p-4 text-xl font-mono text-emerald-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                    <p class="text-[10px] text-slate-500 font-mono mt-1">O cursor retorna para cá automaticamente após cada bipe.</p>
+                </div>
+            </div>
+
+            <div id="status-box" class="bg-slate-950 p-4 rounded-lg border border-slate-800 text-center text-sm font-mono text-slate-400">
+                Aguardando leitura de código...
+            </div>
+        </section>
+
+        <!-- PAINEL DIREITO: TABELA DE HISTÓRICO -->
+        <section class="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                <h2 class="text-lg font-bold text-slate-200">Últimas Saídas Registradas</h2>
+                <div class="flex items-center space-x-2">
+                    <span id="contador-baixas" class="bg-slate-950 text-emerald-400 border border-slate-700 text-xs font-mono px-2 py-1 rounded">
+                        Total Operações: 0
+                    </span>
+                    <span id="contador-itens" class="bg-slate-950 text-sky-400 border border-slate-700 text-xs font-mono px-2 py-1 rounded">
+                        Total Itens: 0
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-x-auto">
+                <table class="w-full text-left text-sm font-mono">
+                    <thead>
+                        <tr class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700">
+                            <th class="p-3 w-20">Hora</th>
+                            <th class="p-3 w-36">Código</th>
+                            <th class="p-3">Descrição</th>
+                            <th class="p-3 text-center w-20">Caixas</th>
+                            <th class="p-3 text-right text-emerald-400 w-28">Total Itens</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-historico" class="divide-y divide-slate-700/50"></tbody>
+                </table>
+                <div id="historico-vazio" class="text-center py-12 text-slate-500 text-xs uppercase">
+                    Nenhuma saída realizada nesta sessão.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL DE ERRO / AVISO NO MEIO DA TELA (AJUSTE 1) -->
+    <div id="modal-erro" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-red-500 rounded-2xl p-6 max-w-md w-full shadow-2xl text-center">
+            <div class="text-5xl mb-3">⚠️</div>
+            <h3 class="text-xl font-bold text-red-500 mb-2 font-mono">ITEM NÃO ENCONTRADO</h3>
+            <p id="modal-erro-msg" class="text-slate-200 text-sm font-mono mb-6 leading-relaxed">
+                O código bipado não existe ou não está cadastrado na aba Produto.
+            </p>
+            <button id="btn-fechar-erro" onclick="fecharModalErro()" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-xl transition text-sm font-mono cursor-pointer shadow-lg active:scale-95">
+                OK / FECHAR AVISO (ENTER)
+            </button>
+        </div>
     </div>
 
-    <div class="form-group">
-      <label for="inputCodigo">Código / EAN do Produto:</label>
-      <input type="text" id="inputCodigo" placeholder="Bipe ou digite o código aqui..." autofocus onkeydown="verificarEnter(event)">
+    <!-- MODAL: VER / EDITAR REGISTROS -->
+    <div id="modal-registros" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-5xl max-h-[85vh] flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center p-4 border-b border-slate-700">
+                <h3 class="text-lg font-bold text-slate-200">Registros de Saída</h3>
+                <button onclick="fecharRegistros()" class="text-slate-400 hover:text-white text-xl leading-none">✕</button>
+            </div>
+            <div class="flex items-center flex-wrap gap-4 px-4 py-3 border-b border-slate-800 bg-slate-950/40">
+                <label class="flex items-center space-x-2 text-xs font-mono text-slate-300 cursor-pointer">
+                    <input type="checkbox" id="filtro-mesa-atual" checked onchange="abrirRegistros()" class="accent-emerald-500">
+                    <span>Somente mesa atual (<span id="filtro-mesa-label"></span>)</span>
+                </label>
+                <label class="flex items-center space-x-2 text-xs font-mono text-slate-300 cursor-pointer">
+                    <input type="checkbox" id="filtro-somente-hoje" checked onchange="abrirRegistros()" class="accent-emerald-500">
+                    <span>Somente hoje</span>
+                </label>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4">
+                <table class="w-full text-left text-xs font-mono">
+                    <thead>
+                        <tr class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700 sticky top-0">
+                            <th class="p-2">Hora</th>
+                            <th class="p-2">Mesa</th>
+                            <th class="p-2">Código</th>
+                            <th class="p-2">Descrição</th>
+                            <th class="p-2 text-center">Caixas</th>
+                            <th class="p-2 text-right">Total</th>
+                            <th class="p-2">Observação</th>
+                            <th class="p-2 text-center">Editar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-registros" class="divide-y divide-slate-800"></tbody>
+                </table>
+                <div id="registros-carregando" class="text-center py-10 text-slate-500 text-xs uppercase">Carregando...</div>
+                <div id="registros-vazio" class="hidden text-center py-10 text-slate-500 text-xs uppercase">Nenhum registro encontrado.</div>
+            </div>
+        </div>
     </div>
 
-    <div class="btn-container">
-      <button type="button" class="btn-principal" onclick="confirmarLancamentoPadrao()">🚀 LANÇAR (CÁLCULO REGRAS)</button>
-      <button type="button" class="btn-manual" onclick="abrirModalManual()">✋ LANÇAR MANUALMENTE</button>
+    <!-- MODAL: EDITAR REGISTRO INDIVIDUAL -->
+    <div id="modal-editar" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md shadow-2xl">
+            <div class="flex justify-between items-center p-4 border-b border-slate-700">
+                <h3 class="text-base font-bold text-slate-200">Corrigir Lançamento</h3>
+                <button onclick="fecharEdicao()" class="text-slate-400 hover:text-white text-xl leading-none">✕</button>
+            </div>
+            <div class="p-4 space-y-4">
+                <div>
+                    <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Código do Produto</label>
+                    <input type="text" id="edit-codigo" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm font-mono text-emerald-400 font-bold focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Qtd de Caixas</label>
+                    <input type="number" id="edit-caixas" min="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm font-mono text-amber-400 font-bold focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Observação</label>
+                    <input type="text" id="edit-observacao" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm font-mono text-slate-200 focus:outline-none focus:border-sky-500">
+                </div>
+                <div id="edit-status" class="text-xs font-mono text-slate-400 hidden"></div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button onclick="fecharEdicao()" class="px-4 py-2 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300">Cancelar</button>
+                    <button onclick="salvarEdicao()" class="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white">Salvar e Atualizar Planilha</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <h3>Histórico de Lançamentos de Hoje</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Hora</th>
-          <th>Mesa</th>
-          <th>Código</th>
-          <th>Descrição</th>
-          <th>Caixas</th>
-          <th>Total Itens</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaHistorico">
-        <tr>
-          <td colspan="6" style="text-align:center;">Carregando histórico...</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbxh8FGQJx2-Q9PQDtnDpbkqM4GgJ0spFYsK_HaLK9dMksvXvZKL7REiRIjhDWTkyKitew/exec";
 
-  <!-- POPUP MODAL PARA LANÇAMENTO MANUAL -->
-  <div id="modalManual" class="modal-overlay">
-    <div class="modal-content">
-      <h3 style="margin-top:0;">Lançamento Manual</h3>
-      <p style="font-size: 13px; color: #666;">Este lançamento vai ignorar as regras de desmembramento de caixas/conjuntos.</p>
-      
-      <div class="form-group">
-        <label for="manualCodigo">Código do Produto:</label>
-        <input type="text" id="manualCodigo" readonly style="background-color: #eee;">
-      </div>
+        let MESA_ATUAL = localStorage.getItem('mesa_expedicao') || "MESA 01";
 
-      <div class="form-group">
-        <label for="manualQuantidade">Quantidade Total de Itens:</label>
-        <input type="number" id="manualQuantidade" placeholder="Ex: 50" min="1">
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn-cancelar" onclick="fecharModalManual()">Cancelar</button>
-        <button type="button" class="btn-confirmar" onclick="confirmarLancamentoManual()">Confirmar</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // Cole aqui a URL gerada ao Implantar seu Web App no Apps Script
-    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxlu7sujN9G1GoCBQmFp2aQkUp-Y2FVG_8qUqtTlr5WSjcgx5R4NByo4tbP-PjSgYAZJw/exec";
-
-    window.onload = function() {
-      carregarRegistrosSaida();
-    };
-
-    function verificarEnter(e) {
-      if (e.key === 'Enter') {
-        confirmarLancamentoPadrao();
-      }
-    }
-
-    // 1. LANÇAMENTO PADRÃO (Aplica Regras)
-    function confirmarLancamentoPadrao() {
-      const codigo = document.getElementById("inputCodigo").value.trim();
-      const caixas = parseInt(document.getElementById("inputCaixas").value) || 1;
-      const mesa = document.getElementById("selectMesa").value;
-
-      if (!codigo) {
-        alert("Por favor, informe o código do produto!");
-        return;
-      }
-
-      enviarRequisicao({
-        action: "registrarSaida",
-        codigoBipado: codigo,
-        caixas: caixas,
-        mesa: mesa,
-        isManual: false
-      });
-    }
-
-    // 2. FUNÇÕES DO MODAL MANUAL
-    function abrirModalManual() {
-      const codigo = document.getElementById("inputCodigo").value.trim();
-
-      if (!codigo) {
-        alert("Digite ou bipe o código do produto antes de clicar em Lançar Manualmente!");
-        return;
-      }
-
-      document.getElementById("manualCodigo").value = codigo;
-      document.getElementById("manualQuantidade").value = "";
-      document.getElementById("modalManual").style.display = "block";
-      document.getElementById("manualQuantidade").focus();
-    }
-
-    function fecharModalManual() {
-      document.getElementById("modalManual").style.display = "none";
-    }
-
-    function confirmarLancamentoManual() {
-      const codigo = document.getElementById("manualCodigo").value.trim();
-      const quantidade = parseInt(document.getElementById("manualQuantidade").value) || 0;
-      const mesa = document.getElementById("selectMesa").value;
-
-      if (quantidade <= 0) {
-        alert("Informe uma quantidade de itens válida!");
-        return;
-      }
-
-      enviarRequisicao({
-        action: "registrarSaida",
-        codigoBipado: codigo,
-        totalManual: quantidade,
-        isManual: true,
-        mesa: mesa,
-        caixas: 1
-      });
-
-      fecharModalManual();
-    }
-
-    // 3. ENVIO DE REQUISIÇÃO (AJAX)
-    function enviarRequisicao(payload) {
-      fetch(URL_SCRIPT, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          alert("Saída registrada com sucesso!");
-          document.getElementById("inputCodigo").value = "";
-          document.getElementById("inputCodigo").focus();
-          carregarRegistrosSaida();
-        } else {
-          alert("Erro ao registrar: " + data.error);
+        function atualizarDisplayMesa() {
+            document.getElementById('label-mesa-ativa').innerText = `Mesa: ${MESA_ATUAL}`;
         }
-      })
-      .catch(err => {
-        alert("Erro na conexão com o servidor: " + err);
-      });
-    }
 
-    // 4. CARREGAR TABELA DE HISTÓRICO
-    function carregarRegistrosSaida() {
-      const mesa = document.getElementById("selectMesa").value;
-      const url = `${URL_SCRIPT}?action=buscarRegistrosSaida&mesa=${encodeURIComponent(mesa)}&somenteHoje=true`;
-
-      fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        const tbody = document.getElementById("tabelaHistorico");
-        tbody.innerHTML = "";
-
-        if (data.registros && data.registros.length > 0) {
-          data.registros.forEach(reg => {
-            const dataHora = new Date(reg.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${dataHora}</td>
-              <td>${reg.mesa}</td>
-              <td>${reg.codigo}</td>
-              <td>${reg.descricao}</td>
-              <td>${reg.caixas}</td>
-              <td><strong>${reg.totalItens}</strong></td>
-            `;
-            tbody.appendChild(tr);
-          });
-        } else {
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Nenhum lançamento efetuado hoje nesta mesa.</td></tr>`;
+        function alterarMesa() {
+            const novaMesa = prompt("Digite o nome ou número da Mesa / Estação:", MESA_ATUAL);
+            if (novaMesa && novaMesa.trim() !== "") {
+                MESA_ATUAL = novaMesa.trim().toUpperCase();
+                localStorage.setItem('mesa_expedicao', MESA_ATUAL);
+                atualizarDisplayMesa();
+                carregarHistoricoDoDia();
+            }
         }
-      })
-      .catch(() => {
-        document.getElementById("tabelaHistorico").innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Erro ao buscar lançamentos.</td></tr>`;
-      });
-    }
-  </script>
+
+        const campoCodigo = document.getElementById('campo-codigo');
+        const campoCaixas = document.getElementById('campo-caixas');
+        const campoObservacao = document.getElementById('campo-observacao');
+        const statusBox = document.getElementById('status-box');
+        const tabelaHistorico = document.getElementById('tabela-historico');
+        const historicoVazio = document.getElementById('historico-vazio');
+        const contadorBaixas = document.getElementById('contador-baixas');
+        const contadorItens = document.getElementById('contador-itens');
+
+        let totalBaixasSessao = 0;
+        let totalItensSessao = 0;
+
+        // FUNÇÕES DO MODAL DE ERRO NO MEIO DA TELA (AJUSTE 1)
+        function abrirModalErro(mensagem) {
+            const modal = document.getElementById('modal-erro');
+            const msgBox = document.getElementById('modal-erro-msg');
+            msgBox.innerText = mensagem;
+            modal.classList.remove('hidden');
+            tocarBipe(false);
+
+            setTimeout(() => {
+                const btn = document.getElementById('btn-fechar-erro');
+                if (btn) btn.focus();
+            }, 50);
+        }
+
+        function fecharModalErro() {
+            const modal = document.getElementById('modal-erro');
+            modal.classList.add('hidden');
+            setTimeout(() => {
+                campoCodigo.focus();
+            }, 50);
+        }
+
+        // Permite fechar o modal com Enter, Esc ou Espaço
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('modal-erro');
+            if (modal && !modal.classList.contains('hidden')) {
+                if (e.key === 'Enter' || e.key === 'Escape' || e.key === ' ') {
+                    e.preventDefault();
+                    fecharModalErro();
+                }
+            }
+        });
+
+        async function inicializarDados() {
+            atualizarDisplayMesa();
+            try {
+                const response = await fetch(`${API_URL}?action=buscarDadosExpedicao&nocache=${Math.random()}`);
+                const dados = await response.json();
+
+                if (dados.logoId) {
+                    document.getElementById('container-logo').innerHTML = `<img src="https://drive.google.com/thumbnail?id=${dados.logoId}&sz=w400" class="h-full object-contain" onerror="this.parentNode.innerText='DI SOLLE';">`;
+                } else {
+                    document.getElementById('container-logo').innerText = "DI SOLLE";
+                }
+            } catch (e) {
+                document.getElementById('container-logo').innerText = "DI SOLLE";
+            }
+
+            carregarHistoricoDoDia();
+        }
+
+        async function carregarHistoricoDoDia() {
+            tabelaHistorico.innerHTML = '';
+            totalBaixasSessao = 0;
+            totalItensSessao = 0;
+            historicoVazio.classList.add('hidden');
+            statusBox.innerText = "Carregando lançamentos de hoje...";
+
+            try {
+                const url = `${API_URL}?action=buscarRegistrosSaida&mesa=${encodeURIComponent(MESA_ATUAL)}&somenteHoje=true&limite=200&nocache=${Math.random()}`;
+                const response = await fetch(url);
+                const dados = await response.json();
+                const registros = dados.registros || [];
+
+                if (registros.length === 0) {
+                    historicoVazio.classList.remove('hidden');
+                } else {
+                    registros.forEach(reg => {
+                        totalBaixasSessao++;
+                        totalItensSessao += reg.totalItens;
+
+                        const hora = reg.dataHora ? new Date(reg.dataHora).toLocaleTimeString() : "";
+                        const tr = document.createElement('tr');
+                        tr.className = "text-xs border-b border-slate-800 hover:bg-slate-800/50";
+                        tr.innerHTML = `
+                            <td class="p-3 text-slate-500 whitespace-nowrap">${hora}</td>
+                            <td class="p-3 font-mono font-bold text-slate-300 whitespace-nowrap">${reg.codigo}</td>
+                            <td class="p-3 text-slate-200 uppercase whitespace-normal break-words font-semibold leading-snug">${reg.descricao}</td>
+                            <td class="p-3 text-center text-amber-400 font-bold whitespace-nowrap">${reg.caixas} Cx</td>
+                            <td class="p-3 text-right text-emerald-400 font-bold whitespace-nowrap">-${reg.totalItens} un</td>
+                        `;
+                        tabelaHistorico.appendChild(tr);
+                    });
+                }
+
+                contadorBaixas.innerText = `Total Operações: ${totalBaixasSessao}`;
+                contadorItens.innerText = `Total Itens: ${totalItensSessao}`;
+                statusBox.innerText = "Aguardando leitura de código...";
+            } catch (err) {
+                statusBox.innerHTML = `<span class="text-red-400 font-bold">❌ Erro ao carregar histórico do dia.</span>`;
+            }
+        }
+
+        function tocarBipe(sucesso) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (sucesso) {
+                    osc.frequency.setValueAtTime(1000, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.12);
+                } else {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                }
+            } catch (e) {}
+        }
+
+        campoCodigo.addEventListener('keydown', async function(e) {
+            if (e.key === 'Enter') {
+                const codigoBipado = campoCodigo.value.trim();
+                const caixasBipadas = parseInt(campoCaixas.value) || 1;
+                const observacao = campoObservacao.value.trim();
+
+                if (!codigoBipado) return;
+
+                campoCodigo.disabled = true;
+                statusBox.innerText = "Registrando operação...";
+
+                try {
+                    const response = await fetch(API_URL, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            action: "registrarSaidaExakta",
+                            codigoBipado: codigoBipado,
+                            caixas: caixasBipadas,
+                            mesa: MESA_ATUAL,
+                            observacao: observacao
+                        })
+                    });
+
+                    const resultado = await response.json();
+
+                    if (resultado.success) {
+                        tocarBipe(true);
+                        const msgEstoque = resultado.descontouEstoque
+                            ? `Estoque Atualizado (${resultado.itensAfetados || 1} item(ns))`
+                            : "Registrado em Saídas (Sem alteração no estoque)";
+
+                        statusBox.innerHTML = `<span class="text-emerald-400 font-bold">✅ Baixa Processada!</span><br><span class="text-xs text-slate-300 leading-tight block mt-1">${resultado.descricao}<br>(${msgEstoque})</span>`;
+
+                        historicoVazio.classList.add('hidden');
+                        totalBaixasSessao++;
+                        totalItensSessao += resultado.totalItens;
+                        contadorBaixas.innerText = `Total Operações: ${totalBaixasSessao}`;
+                        contadorItens.innerText = `Total Itens: ${totalItensSessao}`;
+
+                        const tr = document.createElement('tr');
+                        tr.className = "text-xs border-b border-slate-800 hover:bg-slate-800/50";
+                        tr.innerHTML = `
+                            <td class="p-3 text-slate-500 whitespace-nowrap">${new Date().toLocaleTimeString()}</td>
+                            <td class="p-3 font-mono font-bold text-slate-300 whitespace-nowrap">${codigoBipado}</td>
+                            <td class="p-3 text-slate-200 uppercase whitespace-normal break-words font-semibold leading-snug">${resultado.descricao}</td>
+                            <td class="p-3 text-center text-amber-400 font-bold whitespace-nowrap">${caixasBipadas} Cx</td>
+                            <td class="p-3 text-right text-emerald-400 font-bold whitespace-nowrap">-${resultado.totalItens} un</td>
+                        `;
+                        tabelaHistorico.insertBefore(tr, tabelaHistorico.firstChild);
+                    } else {
+                        throw new Error(resultado.error || "O item lido não existe na aba Produto!");
+                    }
+                } catch (err) {
+                    var msgErro = err.message || "Item não existe ou não cadastrado.";
+                    statusBox.innerHTML = `<span class="text-red-400 font-bold">❌ ${msgErro}</span>`;
+                    abrirModalErro(msgErro); // DISPARA O MODAL CENTRALIZADO NA TELA
+                } finally {
+                    campoCodigo.disabled = false;
+                    campoCodigo.value = '';
+                    campoCaixas.value = '1';
+                    campoObservacao.value = '';
+                    
+                    // Se o modal de erro NÃO estiver aberto, devolve o foco para o input
+                    const modalErro = document.getElementById('modal-erro');
+                    if (!modalErro || modalErro.classList.contains('hidden')) {
+                        campoCodigo.focus();
+                    }
+                }
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            const modalErro = document.getElementById('modal-erro');
+            const modalErroAberto = modalErro && !modalErro.classList.contains('hidden');
+
+            if (
+                !modalErroAberto &&
+                e.target !== campoCaixas &&
+                e.target !== campoObservacao &&
+                !e.target.closest('button') &&
+                !e.target.closest('#modal-registros') &&
+                !e.target.closest('#modal-editar')
+            ) {
+                campoCodigo.focus();
+            }
+        });
+
+        const modalRegistros = document.getElementById('modal-registros');
+        const tabelaRegistros = document.getElementById('tabela-registros');
+        const registrosCarregando = document.getElementById('registros-carregando');
+        const registrosVazio = document.getElementById('registros-vazio');
+
+        async function abrirRegistros() {
+            modalRegistros.classList.remove('hidden');
+            document.getElementById('filtro-mesa-label').innerText = MESA_ATUAL;
+
+            tabelaRegistros.innerHTML = '';
+            registrosVazio.classList.add('hidden');
+            registrosCarregando.classList.remove('hidden');
+
+            const somenteMesaAtual = document.getElementById('filtro-mesa-atual').checked;
+            const somenteHoje = document.getElementById('filtro-somente-hoje').checked;
+            const paramMesa = somenteMesaAtual ? `&mesa=${encodeURIComponent(MESA_ATUAL)}` : '';
+            const paramHoje = `&somenteHoje=${somenteHoje}`;
+
+            try {
+                const response = await fetch(`${API_URL}?action=buscarRegistrosSaida&limite=200${paramMesa}${paramHoje}&nocache=${Math.random()}`);
+                const dados = await response.json();
+                registrosCarregando.classList.add('hidden');
+
+                const registros = dados.registros || [];
+                if (registros.length === 0) {
+                    registrosVazio.classList.remove('hidden');
+                    return;
+                }
+
+                registros.forEach(reg => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-800/50";
+                    const hora = reg.dataHora ? new Date(reg.dataHora).toLocaleString() : "";
+                    tr.innerHTML = `
+                        <td class="p-2 text-slate-500 whitespace-nowrap">${hora}</td>
+                        <td class="p-2 text-slate-400 whitespace-nowrap">${reg.mesa || ""}</td>
+                        <td class="p-2 font-bold text-slate-300 whitespace-nowrap">${reg.codigo}</td>
+                        <td class="p-2 text-slate-200 uppercase whitespace-normal break-words">${reg.descricao}</td>
+                        <td class="p-2 text-center text-amber-400 font-bold">${reg.caixas}</td>
+                        <td class="p-2 text-right text-emerald-400 font-bold">${reg.totalItens}</td>
+                        <td class="p-2 text-slate-400 whitespace-normal break-words">${reg.observacao || ""}</td>
+                        <td class="p-2 text-center">
+                            <button onclick='abrirEdicao(${JSON.stringify(reg)})' class="text-sky-400 hover:text-sky-300 text-sm" title="Corrigir este lançamento">✏️</button>
+                        </td>
+                    `;
+                    tabelaRegistros.appendChild(tr);
+                });
+            } catch (err) {
+                registrosCarregando.classList.add('hidden');
+                registrosVazio.classList.remove('hidden');
+                registrosVazio.innerText = "Erro ao carregar registros.";
+            }
+        }
+
+        function fecharRegistros() {
+            modalRegistros.classList.add('hidden');
+        }
+
+        const modalEditar = document.getElementById('modal-editar');
+        const editCodigo = document.getElementById('edit-codigo');
+        const editCaixas = document.getElementById('edit-caixas');
+        const editObservacao = document.getElementById('edit-observacao');
+        const editStatus = document.getElementById('edit-status');
+        let linhaEmEdicao = null;
+
+        function abrirEdicao(reg) {
+            linhaEmEdicao = reg.linha;
+            editCodigo.value = reg.codigo;
+            editCaixas.value = reg.caixas;
+            editObservacao.value = reg.observacao || "";
+            editStatus.classList.add('hidden');
+            modalEditar.classList.remove('hidden');
+        }
+
+        function fecharEdicao() {
+            modalEditar.classList.add('hidden');
+            linhaEmEdicao = null;
+        }
+
+        async function salvarEdicao() {
+            if (!linhaEmEdicao) return;
+
+            const novoCodigo = editCodigo.value.trim();
+            const novasCaixas = parseInt(editCaixas.value) || 1;
+            const novaObservacao = editObservacao.value.trim();
+
+            if (!novoCodigo) {
+                alert("Informe um código válido.");
+                return;
+            }
+
+            editStatus.classList.remove('hidden');
+            editStatus.innerText = "Salvando e recalculando estoque...";
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        action: "editarRegistroSaida",
+                        linha: linhaEmEdicao,
+                        novoCodigo: novoCodigo,
+                        novasCaixas: novasCaixas,
+                        novaObservacao: novaObservacao
+                    })
+                });
+                const resultado = await response.json();
+
+                if (resultado.success) {
+                    editStatus.innerText = "✅ Atualizado com sucesso!";
+                    setTimeout(() => {
+                        fecharEdicao();
+                        abrirRegistros();
+                        carregarHistoricoDoDia();
+                    }, 700);
+                } else {
+                    editStatus.innerText = "❌ Erro: " + (resultado.error || "não foi possível salvar.");
+                }
+            } catch (err) {
+                editStatus.innerText = "❌ Erro de conexão ao salvar.";
+            }
+        }
+
+        inicializarDados();
+    </script>
 </body>
 </html>
