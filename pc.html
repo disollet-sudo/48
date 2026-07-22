@@ -58,6 +58,10 @@
                     <input type="text" id="campo-codigo" maxlength="13" placeholder="Bipe o código..." autofocus autocomplete="off" class="w-full bg-slate-950 border-2 border-emerald-500 rounded-lg p-4 text-xl font-mono text-emerald-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-400">
                     <p class="text-[10px] text-slate-500 font-mono mt-1">O cursor retorna para cá automaticamente após cada bipe.</p>
                 </div>
+
+                <button type="button" onclick="abrirLancamentoManual()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg transition text-sm font-mono cursor-pointer shadow-lg active:scale-95 flex items-center justify-center space-x-2 mb-6">
+                    <span>✍️ Lançamento Manual</span>
+                </button>
             </div>
 
             <div id="status-box" class="bg-slate-950 p-4 rounded-lg border border-slate-800 text-center text-sm font-mono text-slate-400">
@@ -152,6 +156,38 @@
         </div>
     </div>
 
+    <!-- MODAL: LANÇAMENTO MANUAL (ignora regras de caixas/embalagem) -->
+    <div id="modal-manual" class="hidden fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-indigo-500 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-indigo-400 font-mono">✍️ Lançamento Manual</h3>
+                <button onclick="fecharLancamentoManual()" class="text-slate-400 hover:text-white text-xl leading-none">✕</button>
+            </div>
+            <p class="text-[11px] text-slate-500 font-mono mb-4 leading-relaxed">
+                Este modo ignora caixas/embalagens e regras de desmembramento. A quantidade informada é baixada diretamente do estoque do código digitado.
+            </p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Código do Produto</label>
+                    <input type="text" id="manual-codigo" placeholder="Digite o código..." autocomplete="off" class="w-full bg-slate-950 border-2 border-indigo-500 rounded-lg p-3 text-lg font-mono text-indigo-300 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                </div>
+                <div>
+                    <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Quantidade Total de Unidades</label>
+                    <input type="number" id="manual-quantidade" min="1" placeholder="Ex: 25" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-lg font-mono font-bold text-amber-400 focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Observação (opcional)</label>
+                    <input type="text" id="manual-observacao" placeholder="Ex: ajuste, conferência..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm font-mono text-slate-200 focus:outline-none focus:border-sky-500">
+                </div>
+                <div id="manual-status" class="text-xs font-mono text-slate-400 hidden"></div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button onclick="fecharLancamentoManual()" class="px-4 py-2 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300">Cancelar</button>
+                    <button onclick="salvarLancamentoManual()" class="px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white">Registrar Lançamento</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: EDITAR REGISTRO INDIVIDUAL -->
     <div id="modal-editar" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md shadow-2xl">
@@ -182,7 +218,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxh8FGQJx2-Q9PQDtnDpbkqM4GgJ0spFYsK_HaLK9dMksvXvZKL7REiRIjhDWTkyKitew/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyTl2ZZNbzn7a6wfPbwAPDmq4iFpN2vdxfLoYBKnkHapB47pAGF-g33b34_lsx0l5skCQ/exec";
 
         let MESA_ATUAL = localStorage.getItem('mesa_expedicao') || "MESA 01";
 
@@ -409,7 +445,8 @@
                 e.target !== campoObservacao &&
                 !e.target.closest('button') &&
                 !e.target.closest('#modal-registros') &&
-                !e.target.closest('#modal-editar')
+                !e.target.closest('#modal-editar') &&
+                !e.target.closest('#modal-manual')
             ) {
                 campoCodigo.focus();
             }
@@ -536,6 +573,103 @@
                 editStatus.innerText = "❌ Erro de conexão ao salvar.";
             }
         }
+
+        // ===================== LANÇAMENTO MANUAL (ignora caixas/regras) =====================
+        const modalManual = document.getElementById('modal-manual');
+        const manualCodigo = document.getElementById('manual-codigo');
+        const manualQuantidade = document.getElementById('manual-quantidade');
+        const manualObservacao = document.getElementById('manual-observacao');
+        const manualStatus = document.getElementById('manual-status');
+
+        function abrirLancamentoManual() {
+            manualCodigo.value = '';
+            manualQuantidade.value = '';
+            manualObservacao.value = '';
+            manualStatus.classList.add('hidden');
+            modalManual.classList.remove('hidden');
+            setTimeout(() => manualCodigo.focus(), 50);
+        }
+
+        function fecharLancamentoManual() {
+            modalManual.classList.add('hidden');
+            setTimeout(() => campoCodigo.focus(), 50);
+        }
+
+        async function salvarLancamentoManual() {
+            const codigo = manualCodigo.value.trim();
+            const quantidade = parseInt(manualQuantidade.value) || 0;
+            const observacao = manualObservacao.value.trim() || "Lançamento Manual";
+
+            if (!codigo) {
+                manualStatus.classList.remove('hidden');
+                manualStatus.innerHTML = '<span class="text-red-400">Informe um código válido.</span>';
+                manualCodigo.focus();
+                return;
+            }
+            if (quantidade <= 0) {
+                manualStatus.classList.remove('hidden');
+                manualStatus.innerHTML = '<span class="text-red-400">Informe uma quantidade total válida.</span>';
+                manualQuantidade.focus();
+                return;
+            }
+
+            manualStatus.classList.remove('hidden');
+            manualStatus.innerText = "Registrando lançamento...";
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        action: "registrarSaidaManual",
+                        codigo: codigo,
+                        quantidade: quantidade,
+                        mesa: MESA_ATUAL,
+                        observacao: observacao
+                    })
+                });
+                const resultado = await response.json();
+
+                if (resultado.success) {
+                    tocarBipe(true);
+                    manualStatus.innerHTML = '<span class="text-emerald-400 font-bold">✅ Lançamento registrado!</span>';
+
+                    historicoVazio.classList.add('hidden');
+                    totalBaixasSessao++;
+                    totalItensSessao += resultado.totalItens;
+                    contadorBaixas.innerText = `Total Operações: ${totalBaixasSessao}`;
+                    contadorItens.innerText = `Total Itens: ${totalItensSessao}`;
+
+                    const tr = document.createElement('tr');
+                    tr.className = "text-xs border-b border-slate-800 hover:bg-slate-800/50";
+                    tr.innerHTML = `
+                        <td class="p-3 text-slate-500 whitespace-nowrap">${new Date().toLocaleTimeString()}</td>
+                        <td class="p-3 font-mono font-bold text-slate-300 whitespace-nowrap">${codigo}</td>
+                        <td class="p-3 text-slate-200 uppercase whitespace-normal break-words font-semibold leading-snug">${resultado.descricao}</td>
+                        <td class="p-3 text-center text-indigo-400 font-bold whitespace-nowrap">Manual</td>
+                        <td class="p-3 text-right text-emerald-400 font-bold whitespace-nowrap">-${resultado.totalItens} un</td>
+                    `;
+                    tabelaHistorico.insertBefore(tr, tabelaHistorico.firstChild);
+
+                    setTimeout(() => {
+                        fecharLancamentoManual();
+                    }, 700);
+                } else {
+                    throw new Error(resultado.error || "Não foi possível registrar o lançamento.");
+                }
+            } catch (err) {
+                manualStatus.innerHTML = `<span class="text-red-400 font-bold">❌ ${err.message || "Erro ao registrar."}</span>`;
+            }
+        }
+
+        // Permite registrar com Enter dentro do popup manual (exceto no campo observação)
+        [manualCodigo, manualQuantidade].forEach(campo => {
+            campo.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    salvarLancamentoManual();
+                }
+            });
+        });
 
         inicializarDados();
     </script>
