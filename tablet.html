@@ -48,16 +48,38 @@
                     <p class="text-xs text-gray-400 font-mono">Status: Sincronizado em tempo real (15s)</p>
                 </div>
 
-                <!-- FILTROS POR COLEÇÃO -->
-                <div id="bar-filtros" class="flex flex-wrap gap-1.5">
-                    <button onclick="filtrarColecao('', this)" class="btn-filtro btn-filtro-ativo text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Todos</button>
-                    <button onclick="filtrarColecao('14', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Millenium (14)</button>
-                    <button onclick="filtrarColecao('38', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Inova (38)</button>
-                    <button onclick="filtrarColecao('35', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Prisma (35)</button>
-                    <button onclick="filtrarColecao('01', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Paraty (01)</button>
-                    <button onclick="filtrarColecao('18', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Durafio (18)</button>
-                    <button onclick="filtrarColecao('37', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Utilidade (37)</button>
-                    <button onclick="filtrarColecao('04', this)" class="btn-filtro text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">New Tropical (04)</button>
+                <!-- FILTROS POR COLEÇÃO (2 NÍVEIS: LINHA -> PEÇA) -->
+                <div class="flex flex-col items-end gap-1.5">
+
+                    <!-- CHIP DA LINHA SELECIONADA (aparece só quando um nível 2 está aberto) -->
+                    <div id="chip-linha-selecionada" class="hidden">
+                        <button onclick="resetarFiltros()" type="button" class="btn-filtro-ativo animate-pulse text-[11px] font-semibold px-2.5 py-1 rounded-full border border-emerald-600 shadow-sm transition">
+                            ✕ <span id="chip-linha-texto"></span>
+                        </button>
+                    </div>
+
+                    <!-- NÍVEL 1: LINHAS -->
+                    <div id="bar-filtros-linha" class="flex flex-wrap justify-end gap-1.5">
+                        <button data-linha="" onclick="resetarFiltros()" class="btn-filtro-linha btn-filtro-ativo text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Todos</button>
+                        <button data-linha="14" onclick="selecionarLinha('14', this)" class="btn-filtro-linha text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Millenium (14)</button>
+                        <button data-linha="38" onclick="selecionarLinha('38', this)" class="btn-filtro-linha text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Inova (38)</button>
+                        <button data-linha="35" onclick="selecionarLinha('35', this)" class="btn-filtro-linha text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Prisma (35)</button>
+                        <button data-linha="01" onclick="selecionarLinha('01', this)" class="btn-filtro-linha text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Paraty (01)</button>
+                        <button data-linha="18" onclick="selecionarLinha('18', this)" class="btn-filtro-linha text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Durafio (18)</button>
+                        <button data-linha="17" onclick="selecionarLinha('17', this)" class="btn-filtro-linha text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Versatile (17)</button>
+                        <button data-linha="37" onclick="selecionarLinha('37', this)" class="btn-filtro-linha text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Utilidade (37)</button>
+                        <button data-linha="04" onclick="selecionarLinha('04', this)" class="btn-filtro-linha text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">New Tropical (04)</button>
+                    </div>
+
+                    <!-- NÍVEL 2: PEÇAS DA LINHA SELECIONADA (some/aparece conforme o nível 1) -->
+                    <div id="bar-filtros-peca" class="hidden flex flex-wrap justify-end gap-1.5">
+                        <button data-peca="" onclick="filtrarPeca('', this)" class="btn-filtro-peca btn-filtro-ativo text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">Todos desta linha</button>
+                        <button data-peca="01" onclick="filtrarPeca('01', this)" class="btn-filtro-peca text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">🔪 Faca</button>
+                        <button data-peca="02" onclick="filtrarPeca('02', this)" class="btn-filtro-peca text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">🍴 Garfo</button>
+                        <button data-peca="03" onclick="filtrarPeca('03', this)" class="btn-filtro-peca text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">🥄 Colher</button>
+                        <button data-peca="0303" onclick="filtrarPeca('0303', this)" class="btn-filtro-peca text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">☕ Chá</button>
+                        <button data-peca="04" onclick="filtrarPeca('04', this)" class="btn-filtro-peca text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100">🥄 Espátula</button>
+                    </div>
                 </div>
             </div>
 
@@ -139,7 +161,14 @@
         let ESTOQUE_PLANILHA = [];
         let HISTORICO_ENTRADAS = [];
         let logoCarregada = false;
-        let filtroPrefixo = '';
+        let filtroLinha = '';
+        let filtroPeca = '';
+
+        // Mesma tabela de nomes usada no backend (codigo.gs / decodificarCodigoInjetora)
+        const NOMES_LINHA = {
+            '14': 'Millenium', '38': 'Inova', '35': 'Prisma', '01': 'Paraty',
+            '18': 'Durafio', '17': 'Versatile', '37': 'Utilidade', '04': 'New Tropical'
+        };
 
         document.getElementById('filtro-data-registro').value = new Date().toISOString().split('T')[0];
 
@@ -220,25 +249,81 @@
             }
         }
 
-        function filtrarColecao(prefixo, elementoBotao) {
-            filtroPrefixo = prefixo;
-            document.querySelectorAll('.btn-filtro').forEach(btn => btn.classList.remove('btn-filtro-ativo'));
+        // Extrai as partes fixas do código (mesma regra do backend: linha=0-2, peça=2-6, cor=8-10)
+        function extrairPartesCodigo(codigo) {
+            const c = String(codigo || '').trim().padStart(13, '0');
+            return {
+                linha: c.substring(0, 2),
+                peca: c.substring(2, 6),
+                cor: c.substring(8, 10)
+            };
+        }
+
+        function produtoCombinaComFiltro(prod) {
+            const partes = extrairPartesCodigo(prod.codigo);
+            if (filtroLinha && partes.linha !== filtroLinha) return false;
+            if (filtroPeca) {
+                if (filtroPeca.length === 4) {
+                    if (partes.peca !== filtroPeca) return false;
+                } else if (!partes.peca.startsWith(filtroPeca)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // NÍVEL 1: clicar numa linha (Millenium, Prisma, Paraty...) seleciona e abre o nível 2 (peças)
+        function selecionarLinha(codLinha, elementoBotao) {
+            if (filtroLinha === codLinha) {
+                // Clicar de novo na linha já ativa recolhe o nível 2 e volta pro nível 1
+                resetarFiltros();
+                return;
+            }
+
+            filtroLinha = codLinha;
+            filtroPeca = '';
+
+            document.getElementById('bar-filtros-linha').classList.add('hidden');
+
+            const chip = document.getElementById('chip-linha-selecionada');
+            document.getElementById('chip-linha-texto').innerText = (NOMES_LINHA[codLinha] || 'Linha') + ' (' + codLinha + ')';
+            chip.classList.remove('hidden');
+
+            document.getElementById('bar-filtros-peca').classList.remove('hidden');
+            document.querySelectorAll('.btn-filtro-peca').forEach(btn => btn.classList.remove('btn-filtro-ativo'));
+            document.querySelector('.btn-filtro-peca[data-peca=""]').classList.add('btn-filtro-ativo');
+
+            renderizarGradeProdutos(modoAtual === 'estoque');
+        }
+
+        // NÍVEL 2: filtra por tipo de peça (Faca, Garfo, Colher, Chá, Espátula) dentro da linha selecionada
+        function filtrarPeca(prefixoPeca, elementoBotao) {
+            filtroPeca = prefixoPeca;
+            document.querySelectorAll('.btn-filtro-peca').forEach(btn => btn.classList.remove('btn-filtro-ativo'));
             if (elementoBotao) elementoBotao.classList.add('btn-filtro-ativo');
             renderizarGradeProdutos(modoAtual === 'estoque');
         }
 
-        function codigosIguaisPrefixo(codigo, prefixo) {
-            if (!prefixo) return true;
-            const c = String(codigo).trim();
-            const p = String(prefixo).trim();
-            return c.startsWith(p) || c.replace(/^0+/, '').startsWith(p.replace(/^0+/, ''));
+        // Recolhe o nível 2 e volta a mostrar todas as linhas, sem nenhum filtro ativo
+        function resetarFiltros() {
+            filtroLinha = '';
+            filtroPeca = '';
+
+            document.getElementById('bar-filtros-linha').classList.remove('hidden');
+            document.getElementById('bar-filtros-peca').classList.add('hidden');
+            document.getElementById('chip-linha-selecionada').classList.add('hidden');
+
+            document.querySelectorAll('.btn-filtro-linha').forEach(btn => btn.classList.remove('btn-filtro-ativo'));
+            document.querySelector('.btn-filtro-linha[data-linha=""]').classList.add('btn-filtro-ativo');
+
+            renderizarGradeProdutos(modoAtual === 'estoque');
         }
 
         function renderizarGradeProdutos(exibirQuantidade = false) {
             const container = document.getElementById('grid-produtos');
             container.innerHTML = '';
 
-            const produtosFiltrados = PRODUTOS_PLANILHA.filter(prod => codigosIguaisPrefixo(prod.codigo, filtroPrefixo));
+            const produtosFiltrados = PRODUTOS_PLANILHA.filter(prod => produtoCombinaComFiltro(prod));
 
             if (produtosFiltrados.length === 0) {
                 container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400 font-mono text-xs">Nenhum produto encontrado para este filtro.</div>`;
