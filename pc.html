@@ -294,7 +294,10 @@
         let totalItensSessao = 0;
 
         // FUNÇÕES DO MODAL DE ERRO NO MEIO DA TELA (AJUSTE 1)
-        function abrirModalErro(mensagem) {
+        let focoAposErro = null;
+
+        function abrirModalErro(mensagem, campoParaFoco) {
+            focoAposErro = campoParaFoco || null;
             const modal = document.getElementById('modal-erro');
             const msgBox = document.getElementById('modal-erro-msg');
             msgBox.innerText = mensagem;
@@ -311,7 +314,7 @@
             const modal = document.getElementById('modal-erro');
             modal.classList.add('hidden');
             setTimeout(() => {
-                campoCodigo.focus();
+                (focoAposErro || campoCodigo).focus();
             }, 50);
         }
 
@@ -752,7 +755,9 @@
                     throw new Error(resultado.error || "Não foi possível registrar o lançamento.");
                 }
             } catch (err) {
-                manualStatus.innerHTML = `<span class="text-red-400 font-bold">❌ ${err.message || "Erro ao registrar."}</span>`;
+                const msgErro = err.message || "Item não existe ou não cadastrado.";
+                manualStatus.innerHTML = `<span class="text-red-400 font-bold">❌ ${msgErro}</span>`;
+                abrirModalErro(msgErro, manualCodigo); // DISPARA O MODAL GRANDE NO CENTRO DA TELA
             }
         }
 
@@ -830,7 +835,9 @@
                     throw new Error(resultado.error || "Não foi possível registrar o descarte.");
                 }
             } catch (err) {
-                descarteStatus.innerHTML = `<span class="text-red-400 font-bold">❌ ${err.message || "Erro ao registrar."}</span>`;
+                const msgErro = err.message || "Item não existe ou não cadastrado.";
+                descarteStatus.innerHTML = `<span class="text-red-400 font-bold">❌ ${msgErro}</span>`;
+                abrirModalErro(msgErro, descarteCodigo); // DISPARA O MODAL GRANDE NO CENTRO DA TELA
             }
         }
 
